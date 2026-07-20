@@ -1706,7 +1706,7 @@
             if (data.code === 0) break;
             attempt++;
             if (attempt > MAX_RETRY) break;
-            const wait = Math.min(1000 * Math.pow(2, attempt - 1), 2000);
+            const wait = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
             status.textContent = '触发风控(code=' + data.code + ')，' + (wait / 1000) + 's 后重试 ' + attempt + '/' + MAX_RETRY + '...';
             await sleep(wait);
           }
@@ -1744,7 +1744,7 @@
     }
 
     function renderBiliList() {
-      const listEl = document.getElementById('biliList');
+      const listEl = document.getElementById('biliVideoList');
       if (!biliVideos.length) { listEl.innerHTML = ''; return; }
       listEl.innerHTML = '<div style="font-weight:600;font-size:11px;color:var(--muted);padding:4px 12px;display:grid;grid-template-columns:1fr 140px 110px 80px;gap:8px;">' +
         '<span>标题</span><span>BV号</span><span>发布时间</span><span></span></div>' +
