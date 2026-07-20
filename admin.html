@@ -1083,40 +1083,36 @@
       if (editingId !== null) {
         const old = mainData[editingId];
         mainData[editingId] = record;
-
-        // 玩家名或曾用名变了 → 同步所有同主页纪录
-        if (record.player !== old.player || record.alias !== old.alias) {
-          const hp = record.homepage || old.homepage;
-          const hpNorm = s => (s || '').toLowerCase().replace(/\/+$/, '').trim();
-          if (hpNorm(hp)) {
-            mainData.forEach((r, i) => {
-              if (i !== editingId && hpNorm(r.homepage) === hpNorm(hp)) {
-                if (record.player !== old.player) r.player = record.player;
-                if (record.alias !== old.alias) r.alias = record.alias;
-              }
-            });
-            // 也同步 CR 数据中同主页的纪录
-            ['mobile', 'pc'].forEach(type => {
-              (crData[type] || []).forEach(r => {
-                if (hpNorm(r.homepage) === hpNorm(hp)) {
-                  if (record.player !== old.player) r.player = record.player;
-                  if (record.alias !== old.alias) r.alias = record.alias;
-                }
-              });
-            });
-            showToast('已更新本纪录，并同步修改了同主页下的玩家名/曾用名');
-          } else {
-            showToast('已更新纪录（无主页信息，未同步其他纪录）');
-          }
-        } else {
-          showToast('已更新纪录');
-        }
+        syncNameAndAlias(record, old);
+        showToast((record.player !== old.player || record.alias !== old.alias) ? '已保存并同步到同主页纪录' : '已更新纪录');
       } else {
         mainData.push(record);
         showToast('已添加新纪录');
       }
       cancelEdit();
       renderMain();
+    }
+
+    // 同主页同步玩家名和曾用名（编辑时比较 old，新增时同步已有纪录）
+    function syncNameAndAlias(record, old) {
+      if (old && record.player === old.player && record.alias === old.alias) return;
+      const hp = record.homepage || (old && old.homepage) || '';
+      const hpNorm = s => (s || '').toLowerCase().replace(/\/+$/, '').trim();
+      const matchHp = hpNorm(hp);
+      if (!matchHp && !old) return;
+      const changedPlayer = !old || record.player !== old.player;
+      const changedAlias = !old || record.alias !== old.alias;
+      const doSync = (arr) => {
+        arr.forEach(r => {
+          const matches = matchHp ? hpNorm(r.homepage) === matchHp : r.player === (old ? old.player : record.player);
+          if (matches && r !== record) {
+            if (changedPlayer) r.player = record.player;
+            if (changedAlias) r.alias = record.alias;
+          }
+        });
+      };
+      doSync(mainData);
+      ['mobile', 'pc'].forEach(type => doSync(crData[type] || []));
     }
 
     function confirmOverwrite() {
@@ -1128,6 +1124,7 @@
         const rec = { ...pending };
         Object.keys(rec).forEach(k => { if (rec[k] === undefined) delete rec[k]; });
         mainData[idx] = rec;
+        syncNameAndAlias(rec, null);
         showToast('已覆盖纪录');
       }
       document.getElementById('dupConfirm').style.display = 'none';
@@ -1141,6 +1138,7 @@
       const rec = { ...pending };
       Object.keys(rec).forEach(k => { if (rec[k] === undefined) delete rec[k]; });
       mainData.push(rec);
+      syncNameAndAlias(rec, null);
       showToast('已添加新纪录');
       document.getElementById('dupConfirm').style.display = 'none';
       cancelEdit();
@@ -1164,6 +1162,7 @@
       if (source) record.source = source;
       if (homepage) record.homepage = homepage;
       mainData.push(record);
+      syncNameAndAlias(record, null);
       // 清除编辑状态但不清空表单，方便继续添加同玩家
       selectedIdx = -1;
       editingId = null;
