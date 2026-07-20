@@ -671,6 +671,7 @@
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <input type="text" id="biliMidInput" placeholder="输入 UID 或 https://space.bilibili.com/xxx" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">
           <button class="btn btn-primary" id="biliFetchBtn" onclick="fetchBiliVideos()">抓取</button>
+          <button class="btn btn-outline" id="biliCancelBtn" onclick="cancelBiliFetch()" style="display:none;">取消</button>
         </div>
         <div id="biliStatus" style="font-size:13px;color:var(--muted);margin-bottom:8px;"></div>
         <div id="biliPlayerName" style="font-size:14px;font-weight:600;color:var(--primary);margin-bottom:8px;"></div>
@@ -1689,16 +1690,29 @@
     let biliMid = '';
     let biliUname = '';
     let selectedBvid = '';
+    let _biliCancel = false;
+
+    function cancelBiliFetch() {
+      _biliCancel = true;
+      document.getElementById('biliCancelBtn').style.display = 'none';
+      document.getElementById('biliFetchBtn').disabled = false;
+      document.getElementById('biliFetchBtn').textContent = '抓取';
+      document.getElementById('biliStatus').textContent = '已取消';
+    }
 
     async function fetchBiliVideos() {
+      if (document.getElementById('biliFetchBtn').disabled) return;
       const input = document.getElementById('biliMidInput').value.trim();
       if (!input) { showToast('请输入 UID 或主页链接'); return; }
       const btn = document.getElementById('biliFetchBtn');
+      const cancelBtn = document.getElementById('biliCancelBtn');
       const status = document.getElementById('biliStatus');
       const nameEl = document.getElementById('biliPlayerName');
       const listEl = document.getElementById('biliVideoList');
+      _biliCancel = false;
       btn.disabled = true;
       btn.textContent = '抓取中...';
+      cancelBtn.style.display = '';
       status.textContent = '';
       nameEl.textContent = '';
       listEl.innerHTML = '';
@@ -1711,16 +1725,20 @@
 
       try {
         const PS = 50;
-        const MAX_RETRY = 10;
+        const MAX_RETRY = 20;
+        const RETRY_DELAY = 2000;
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         let vlist = [];
         let total = Infinity;
         let pn = 1;
 
         while (vlist.length < total && pn <= 40) {
+          if (_biliCancel) { status.textContent = '已取消（已获取 ' + vlist.length + ' 个）'; biliVideos = vlist; biliUname = vlist.length > 0 ? vlist[0].author : ''; if (vlist.length) renderBiliList(); return; }
+
           let data = null;
           let attempt = 0;
-          while (attempt <= MAX_RETRY) {
+          while (attempt < MAX_RETRY) {
+            if (_biliCancel) return;
             const suffix = attempt > 0 ? '（重试 ' + attempt + '/' + MAX_RETRY + '）' : '';
             status.textContent = '获取视频列表... 已抓 ' + vlist.length + (total !== Infinity ? '/' + total : '') + suffix;
             try {
@@ -1731,15 +1749,14 @@
             }
             if (data.code === 0) break;
             attempt++;
-            if (attempt > MAX_RETRY) break;
-            const wait = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-            status.textContent = '触发风控(code=' + data.code + ')，' + (wait / 1000) + 's 后重试 ' + attempt + '/' + MAX_RETRY + '...';
-            await sleep(wait);
+            if (attempt >= MAX_RETRY) break;
+            status.textContent = '触发风控(code=' + data.code + ')，2s 后重试 ' + attempt + '/' + MAX_RETRY + '...';
+            await sleep(RETRY_DELAY);
           }
 
           if (!data || data.code !== 0) {
-            status.textContent = '抓取失败(code=' + (data ? data.code : '?') + ')，已重试 ' + MAX_RETRY + ' 次：' + ((data && data.message) || '') + (vlist.length ? '（已抓到 ' + vlist.length + ' 个）' : '');
-            if (vlist.length === 0) { btn.disabled = false; btn.textContent = '抓取'; return; }
+            status.textContent = vlist.length ? '已获取 ' + vlist.length + '/' + total + ' 个视频（B站限制，无法获取更多）' : '抓取失败，已重试 ' + MAX_RETRY + ' 次';
+            if (vlist.length === 0) { btn.disabled = false; btn.textContent = '抓取'; cancelBtn.style.display = 'none'; return; }
             break;
           }
 
@@ -1748,7 +1765,7 @@
           vlist = vlist.concat(page);
           if (page.length === 0) break;
           pn++;
-          if (vlist.length < total) await sleep(800);
+          if (vlist.length < total) await sleep(600);
         }
 
         biliVideos = vlist;
@@ -1756,10 +1773,10 @@
 
         if (vlist.length === 0) {
           status.textContent = '该用户没有公开视频';
-          btn.disabled = false; btn.textContent = '抓取'; return;
+          btn.disabled = false; btn.textContent = '抓取'; cancelBtn.style.display = 'none'; return;
         }
 
-        nameEl.textContent = 'UP主：' + biliUname + '  |  共 ' + vlist.length + ' 个视频';
+        nameEl.textContent = 'UP主：' + biliUname + '  |  共 ' + vlist.length + ' 个视频' + (vlist.length < total ? '（B站限制，实际共 ' + total + ' 个，仅获取到 ' + vlist.length + ' 个）' : '');
         status.textContent = '';
         renderBiliList();
       } catch(e) {
@@ -1767,6 +1784,7 @@
       }
       btn.disabled = false;
       btn.textContent = '抓取';
+      cancelBtn.style.display = 'none';
     }
 
     function renderBiliList() {
