@@ -1081,8 +1081,36 @@
     function doSaveRecord(record) {
       Object.keys(record).forEach(k => { if (record[k] === undefined) delete record[k]; });
       if (editingId !== null) {
+        const old = mainData[editingId];
         mainData[editingId] = record;
-        showToast('已更新纪录');
+
+        // 玩家名或曾用名变了 → 同步所有同主页纪录
+        if (record.player !== old.player || record.alias !== old.alias) {
+          const hp = record.homepage || old.homepage;
+          const hpNorm = s => (s || '').toLowerCase().replace(/\/+$/, '').trim();
+          if (hpNorm(hp)) {
+            mainData.forEach((r, i) => {
+              if (i !== editingId && hpNorm(r.homepage) === hpNorm(hp)) {
+                if (record.player !== old.player) r.player = record.player;
+                if (record.alias !== old.alias) r.alias = record.alias;
+              }
+            });
+            // 也同步 CR 数据中同主页的纪录
+            ['mobile', 'pc'].forEach(type => {
+              (crData[type] || []).forEach(r => {
+                if (hpNorm(r.homepage) === hpNorm(hp)) {
+                  if (record.player !== old.player) r.player = record.player;
+                  if (record.alias !== old.alias) r.alias = record.alias;
+                }
+              });
+            });
+            showToast('已更新本纪录，并同步修改了同主页下的玩家名/曾用名');
+          } else {
+            showToast('已更新纪录（无主页信息，未同步其他纪录）');
+          }
+        } else {
+          showToast('已更新纪录');
+        }
       } else {
         mainData.push(record);
         showToast('已添加新纪录');
