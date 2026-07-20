@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta property="og:image" content="favicon.png">
+  <meta property="og:image:width" content="64">
+  <meta property="og:image:height" content="64">
+  <title>历届移动端 CR - CGOI</title>
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --card: #ffffff;
+      --border: #e8eaf1;
+      --text: #1f2533;
+      --muted: #8a93a8;
+      --primary: #5b6cff;
+      --primary-light: #eef0ff;
+      --shadow: 0 1px 3px rgba(20,30,60,.06);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+      color: #fff;
+      padding: 28px 24px 24px;
+      position: relative;
+      z-index: 999;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 40%);
+      pointer-events: none;
+    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { margin: 0; font-size: 26px; font-weight: 800; }
+
+    /* ===== 菜单 ===== */
+    .nav-menu {
+      position: relative;
+    }
+    .nav-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,.3); }
+    .nav-dropdown {
+      position: absolute;
+      top: 44px;
+      right: 0;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(20,30,60,.12);
+      min-width: 140px;
+      display: none;
+      z-index: 100;
+    }
+    .nav-dropdown.show { display: block; }
+    .nav-dropdown a {
+      display: block;
+      padding: 10px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .nav-dropdown a:first-child { border-radius: 10px 10px 0 0; }
+    .nav-dropdown a:last-child { border-radius: 0 0 10px 10px; }
+    .nav-dropdown a:hover { background: var(--primary-light); color: var(--primary); }
+    .nav-dropdown a.active { color: var(--primary); background: var(--primary-light); }
+
+    .gen-btn {
+      padding: 8px 18px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .gen-btn:hover { opacity: .85; transform: translateY(-1px); }
+    .gen-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .notice-wrap {
+      max-width: 1200px;
+      margin: 18px auto 14px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .notice {
+      padding: 10px 16px;
+      background: #fef3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #856404;
+      font-weight: 500;
+      width: fit-content;
+    }
+    .hide-star {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .hide-star input { cursor: pointer; }
+
+    /* ===== 平台切换 ===== */
+    .tabs {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px 0;
+      display: flex;
+      gap: 6px;
+    }
+    .tabs .gen-btn {
+      margin-left: auto;
+    }
+    .tab {
+      padding: 8px 20px;
+      border: none;
+      background: var(--card);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all .2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--primary);
+      background: var(--bg);
+      border-color: var(--primary);
+    }
+
+    /* ===== 表格 ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+    .table-wrap {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+    }
+    th {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: .3px;
+      padding: 12px 18px;
+      text-align: left;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+    td {
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { filter: brightness(0.97); }
+    .wplayer { font-weight: 700; color: var(--text); white-space: nowrap; }
+    .cr-player-link { color: var(--text); text-decoration: none; transition: color .15s; }
+    .cr-player-link:hover { color: var(--primary); text-decoration: underline; }
+    .wtime { font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .wplatform {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .wplatform.ios { background: #e5e7eb; color: #1f2937; }
+    .wplatform.android { background: #d1fae5; color: #059669; }
+    .wdate { color: var(--muted); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .loading { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .header h1 { font-size: 20px; }
+      .header { padding: 20px 16px; }
+      .tabs { padding: 12px 16px 0; }
+      .container { padding: 0 16px 40px; }
+      .table-wrap { overflow-x: visible; }
+      table { min-width: 0; }
+      th, td { padding: 6px 8px; font-size: 11px; white-space: normal; word-break: break-all; }
+      th { font-size: 11px; }
+      .wplatform { font-size: 10px; padding: 2px 6px; }
+      .wdate { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1>GOI 中国纪录变迁史</h1>
+      <div class="nav-menu">
+        <button class="nav-btn" id="navBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="nav-dropdown" id="navDropdown">
+          <a href="index.html">主榜</a>
+          <a href="cr.html" class="active">历届 CR</a>
+          <a href="distribution.html">时间分布</a>
+          <a href="admin.html">管理</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-type="mobile">移动端</button>
+    <button class="tab" data-type="pc">PC</button>
+    <button class="gen-btn" id="genBtn" onclick="generateCrImage()">生成长图</button>
+  </div>
+
+  <div class="notice-wrap">
+    <div class="notice">通关时间后带 [*] 号的，代表有争议或作弊的成绩</div>
+    <label class="hide-star" title="隐藏带有 * 号的争议/作弊成绩">
+      <input type="checkbox" id="hideStar" checked> 隐藏争议成绩
+    </label>
+  </div>
+
+  <div class="container">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>玩家</th>
+            <th>原速通中国纪录</th>
+            <th>平台</th>
+            <th>日期</th>
+          </tr>
+        </thead>
+        <tbody id="crBody"></tbody>
+      </table>
+      <div class="loading" id="loading"><div class="spinner"></div>加载中...</div>
+      <div class="empty" id="empty" style="display:none;">暂无数据</div>
+    </div>
+  </div>
+
+  <script>
+    let crData = {};
+    let currentType = 'mobile';
+
+    document.getElementById('navBtn').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('navDropdown').classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      document.getElementById('navDropdown').classList.remove('show');
+    });
+
+
+
+    function escapeHtml(s) {
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    const playerColors = [
+      '#b3e5fc', '#fff9c4', '#ffccbc', '#f8bbd0', '#e1bee7',
+      '#c8e6c9', '#b2dfdb', '#bbdefb', '#d1c4e9', '#ffe0b2',
+      '#c5cae9', '#dcedc8', '#f0f4c3', '#ffecb3', '#d7ccc8',
+      '#b2ebf2', '#e0f7fa', '#fce4ec', '#f3e5f5', '#e8f5e9',
+      '#fff3e0', '#e3f2fd', '#f1f8e9', '#ede7f6', '#fff8e1',
+    ];
+    let playerColorMap = {};
+
+    function render() {
+      let list = crData[currentType] || [];
+      if (document.getElementById('hideStar').checked) {
+        list = list.filter(item => !item.time.includes('*'));
+      }
+      const body = document.getElementById('crBody');
+      const empty = document.getElementById('empty');
+      const loading = document.getElementById('loading');
+
+      loading.style.display = 'none';
+      if (list.length === 0) { body.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+
+      playerColorMap = {};
+      let colorIdx = 0;
+
+      body.innerHTML = list.map(item => {
+        if (!(item.player in playerColorMap)) {
+          playerColorMap[item.player] = playerColors[colorIdx % playerColors.length];
+          colorIdx++;
+        }
+        const bgColor = playerColorMap[item.player];
+        const pClass = item.platform === 'iOS' ? 'ios' : 'android';
+        const pText = item.platform === 'Android' ? '安卓' : item.platform;
+        return '<tr style="background:' + bgColor + '">' +
+          '<td class="wplayer"><a class="cr-player-link" href="player.html?name=' + encodeURIComponent(item.player) + (item.homepage ? '&homepage=' + encodeURIComponent(item.homepage) : '') + '">' + escapeHtml(item.player) + '</a></td>' +
+          '<td class="wtime">' + escapeHtml(item.time) + '</td>' +
+          '<td><span class="wplatform ' + pClass + '">' + escapeHtml(pText) + '</span></td>' +
+          '<td class="wdate">' + escapeHtml(item.date) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentType = tab.dataset.type;
+        render();
+      });
+    });
+    document.getElementById('hideStar').addEventListener('change', render);
+
+    fetch('cr_history.json')
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(d => { crData = d; render(); })
+      .catch(err => {
+        document.getElementById('loading').innerHTML =
+          '加载失败：' + escapeHtml(err.message);
+      });
+
+    // ===== 生成长图 =====
+    let _html2canvasLoading = false;
+    function loadHtml2Canvas(cb) {
+      if (window.html2canvas) { cb(); return; }
+      if (_html2canvasLoading) { setTimeout(() => loadHtml2Canvas(cb), 200); return; }
+      _html2canvasLoading = true;
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.onload = () => { _html2canvasLoading = false; cb(); };
+      s.onerror = () => { _html2canvasLoading = false; alert('无法加载图片生成库'); };
+      document.head.appendChild(s);
+    }
+
+    function formatDate(d) {
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function generateCrImage() {
+      const btn = document.getElementById('genBtn');
+      if (btn.disabled) return;
+      let list = crData[currentType] || [];
+      if (document.getElementById('hideStar').checked) {
+        list = list.filter(item => !item.time.includes('*'));
+      }
+      if (list.length === 0) { alert('暂无数据'); return; }
+
+      loadHtml2Canvas(() => {
+        btn.textContent = '生成中...';
+        btn.disabled = true;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;display:flex;flex-direction:column;gap:16px;padding:24px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;';
+
+        const statusText = document.createElement('div');
+        statusText.style.cssText = 'font-size:13px;color:#999;font-weight:500;margin-bottom:-8px;';
+        statusText.textContent = document.getElementById('hideStar').checked ? '已隐藏争议/作弊成绩（带 * 号）' : '显示所有成绩（含争议/作弊）';
+        wrapper.appendChild(statusText);
+
+        const title = document.createElement('div');
+        title.style.cssText = 'font-size:22px;font-weight:800;color:var(--text);';
+        title.textContent = 'GOI 中国纪录变迁史 - ' + (currentType === 'mobile' ? '移动端' : 'PC');
+        wrapper.appendChild(title);
+
+        // 提示
+        const tip = document.createElement('div');
+        tip.style.cssText = 'font-size:12px;color:#856404;padding:8px 12px;background:#fef3cd;border:1px solid #ffc107;border-radius:8px;width:fit-content;';
+        tip.textContent = '通关时间后带 [*] 号的，代表有争议或作弊的成绩';
+        wrapper.appendChild(tip);
+
+        const perColumn = 100;
+        const columnsRow = document.createElement('div');
+        columnsRow.style.cssText = 'display:inline-flex;gap:20px;align-items:flex-start;';
+
+        playerColorMap = {};
+        let colorIdx = 0;
+
+        for (let start = 0; start < list.length; start += perColumn) {
+          const tableWrap = document.createElement('div');
+          tableWrap.className = 'table-wrap';
+          tableWrap.style.cssText = 'border-radius:10px;overflow:hidden;min-width:500px;';
+
+          const table = document.createElement('table');
+          table.style.cssText = 'width:100%;border-collapse:collapse;';
+
+          const thead = document.createElement('thead');
+          thead.innerHTML = '<tr><th>玩家</th><th>原速通中国纪录</th><th>平台</th><th>日期</th></tr>';
+          table.appendChild(thead);
+
+          const tbody = document.createElement('tbody');
+          const slice = list.slice(start, start + perColumn);
+          slice.forEach(item => {
+            if (!(item.player in playerColorMap)) {
+              playerColorMap[item.player] = playerColors[colorIdx % playerColors.length];
+              colorIdx++;
+            }
+            const bgColor = playerColorMap[item.player];
+            const pClass = item.platform === 'iOS' ? 'ios' : 'android';
+            const pText = item.platform === 'Android' ? '安卓' : item.platform;
+            const tr = document.createElement('tr');
+            tr.style.cssText = 'background:' + bgColor + ';';
+            tr.innerHTML = '<td class="wplayer">' + escapeHtml(item.player) + '</td>' +
+              '<td class="wtime">' + escapeHtml(item.time) + '</td>' +
+              '<td><span class="wplatform ' + pClass + '">' + escapeHtml(pText) + '</span></td>' +
+              '<td class="wdate">' + escapeHtml(item.date) + '</td>';
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
+          tableWrap.appendChild(table);
+          columnsRow.appendChild(tableWrap);
+        }
+        wrapper.appendChild(columnsRow);
+        document.body.appendChild(wrapper);
+
+        html2canvas(wrapper, {
+          backgroundColor: '#f5f6fb',
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'GOI_CR_' + (currentType === 'mobile' ? 'Mobile' : 'PC') + '_' + formatDate(new Date()) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          document.body.removeChild(wrapper);
+          btn.textContent = '生成长图';
+          btn.disabled = false;
+        }).catch(err => {
+          document.body.removeChild(wrapper);
+          btn.textContent = '生成长图';
+          btn.disabled = false;
+          alert('生成失败：' + err.message);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

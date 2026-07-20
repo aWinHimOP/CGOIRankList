@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>玩家 - CGOI</title>
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --card: #ffffff;
+      --border: #e8eaf1;
+      --text: #1f2533;
+      --muted: #8a93a8;
+      --primary: #5b6cff;
+      --primary-light: #eef0ff;
+      --pc: #2563eb;
+      --pc-bg: #e0edff;
+      --android: #059669;
+      --android-bg: #d1fae5;
+      --ios: #1f2937;
+      --ios-bg: #e5e7eb;
+      --gold: #f59e0b;
+      --silver: #94a3b8;
+      --bronze: #c2750c;
+      --shadow: 0 1px 3px rgba(20,30,60,.06), 0 1px 2px rgba(20,30,60,.04);
+      --shadow-hover: 0 8px 24px rgba(91,108,255,.14);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Roboto, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+      color: #fff;
+      padding: 28px 24px 24px;
+    }
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .back-link {
+      color: rgba(255,255,255,.7);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 12px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: #fff; }
+    .player-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .player-hpage {
+      font-size: 13px;
+      color: #fff;
+      background: rgba(255,255,255,.2);
+      padding: 4px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .player-hpage:hover { background: rgba(255,255,255,.35); }
+    .player-ranks {
+      margin-top: 10px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+    .player-ranks span { opacity: .85; }
+    .player-ranks strong { opacity: 1; }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .stats strong { color: var(--text); }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      background: #eef0f6;
+      padding: 4px;
+      border-radius: 12px;
+    }
+    .filter-btn {
+      padding: 6px 14px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+    }
+    .filter-btn:hover { color: var(--text); }
+    .filter-btn.active { background: #fff; color: var(--primary); box-shadow: var(--shadow); }
+    .toolbar select {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+      background: #fff;
+    }
+    .gen-btn {
+      padding: 8px 16px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+    }
+    .gen-btn:hover { opacity: .85; }
+    .gen-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .list { display: flex; flex-direction: column; gap: 10px; }
+    .row {
+      display: grid;
+      grid-template-columns: 40px 1fr 100px 90px 90px;
+      gap: 18px;
+      align-items: center;
+      background: var(--card);
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      transition: transform .18s, box-shadow .18s, border-color .18s;
+      animation: fade .35s ease both;
+    }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .row:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: #d8dcf0; }
+    .r-rank { font-size: 20px; font-weight: 800; color: #000; text-align: center; line-height: 1; }
+    .r-rank-1 { color: var(--gold); }
+    .r-rank-2 { color: var(--silver); }
+    .r-rank-3 { color: var(--bronze); }
+    .r-time { font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; text-align: right; font-size: 18px; }
+    .r-platform {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .pc { background: var(--pc-bg); color: var(--pc); }
+    .android { background: var(--android-bg); color: var(--android); }
+    .ios { background: var(--ios-bg); color: var(--ios); }
+    .r-date { font-size: 12px; color: var(--muted); text-align: right; }
+    .r-source {
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .r-source a { color: var(--primary); text-decoration: none; }
+    .r-source a:hover { text-decoration: underline; }
+
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+    }
+    .empty-icon { font-size: 44px; margin-bottom: 10px; }
+    #loading { text-align: center; padding: 80px 20px; color: var(--muted); }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .row { grid-template-columns: 36px 1fr 70px; gap: 10px; }
+      .r-source { display: none; }
+      .r-date { display: none; }
+      .player-title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">← 返回排行榜</a>
+      <div class="player-title" id="playerTitle">玩家</div>
+      <div class="player-ranks" id="playerRanks"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats" id="stats"></div>
+    <div class="toolbar">
+      <select id="sortField">
+        <option value="time_asc" selected>通关时间 (快→慢)</option>
+        <option value="time_desc">通关时间 (慢→快)</option>
+        <option value="date_asc">日期 (早→晚)</option>
+        <option value="date_desc">日期 (晚→早)</option>
+      </select>
+      <div class="filter-group">
+        <button class="filter-btn active" data-plat="all">全部</button>
+        <button class="filter-btn" data-plat="PC">PC</button>
+        <button class="filter-btn" data-plat="Android">安卓</button>
+        <button class="filter-btn" data-plat="iOS">iOS</button>
+      </div>
+      <button class="gen-btn" id="genBtn" onclick="generateImage()">生成长图</button>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty" style="display:none;">
+      <div>暂无纪录</div>
+    </div>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div>正在加载数据...</div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const playerName = params.get('name') || '';
+    const playerHomepage = params.get('homepage') || '';
+    document.title = playerName + ' - CGOI 排行榜';
+    document.getElementById('playerTitle').textContent = playerName;
+
+    let allData = [];
+    let playerRecords = [];
+    let playerRankInfo = {};
+    let currentSort = 'time_asc';
+    let currentPlat = 'all';
+
+    function formatDate(d) {
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function escapeHtml(s) {
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function matchesPlayer(item) {
+      const sameName = (item.player || '').toLowerCase().trim() === playerName.toLowerCase().trim();
+      if (!playerHomepage) return sameName;
+      if (!sameName) return false;
+      const itemHps = (item.homepage || '').split(/\n/).map(l => l.toLowerCase().trim());
+      return itemHps.includes(playerHomepage.toLowerCase().trim());
+    }
+
+    function normalizePlatform(p) {
+      if (!p) return '其他';
+      const low = String(p).toLowerCase();
+      if (low.includes('pc') || low.includes('电脑')) return 'PC';
+      if (low.includes('ios') || low.includes('苹果') || low.includes('iphone') || low.includes('ipad')) return 'iOS';
+      if (low.includes('android') || low.includes('安卓') || low.includes('手机')) return 'Android';
+      return '其他';
+    }
+
+    function parseTimePlay(tp) {
+      if (!tp) return 0;
+      let hasStar = tp.includes('*');
+      let s = tp.replace(/\*/g, '').replace(/\?/g, '9');
+      let h = 0, m = 0, sec = 0;
+      let hm = s.match(/([\d.]+)h/);
+      if (hm) h = parseFloat(hm[1]) || 0;
+      let mm = s.match(/([\d.]+)m/);
+      if (mm) m = parseFloat(mm[1]) || 0;
+      let rest = s.replace(/[\d.]+[hm]/g, '').replace(/s/g, '').trim();
+      if (rest) sec = parseFloat(rest) || 0;
+      let total = h * 3600 + m * 60 + sec;
+      if (tp.includes('?')) total = Math.ceil(total);
+      if (tp.includes('*')) total += 360000;
+      return total;
+    }
+
+    function render() {
+      let filtered = playerRecords.slice();
+      if (currentPlat !== 'all') {
+        filtered = filtered.filter(i => i.platform === currentPlat);
+      }
+      if (currentSort === 'time_asc') filtered.sort((a,b) => a._sec - b._sec);
+      else if (currentSort === 'time_desc') filtered.sort((a,b) => b._sec - a._sec);
+      else if (currentSort === 'date_asc') filtered.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      else if (currentSort === 'date_desc') filtered.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      const total = playerRecords.length;
+      const pc = playerRecords.filter(i => i.platform === 'PC').length;
+      const andr = playerRecords.filter(i => i.platform === 'Android').length;
+      const ios = playerRecords.filter(i => i.platform === 'iOS').length;
+      document.getElementById('stats').innerHTML =
+        `<span>共 <strong>${total}</strong> 条纪录 | PC: <strong>${pc}</strong> 安卓: <strong>${andr}</strong> iOS: <strong>${ios}</strong></span>`;
+
+      document.getElementById('loading').style.display = 'none';
+      const list = document.getElementById('list');
+      const empty = document.getElementById('empty');
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+
+      list.innerHTML = filtered.map((item, i) => {
+        const rank = i + 1;
+        const rankClass = rank <= 3 ? 'r-rank-' + rank : '';
+        const pText = item.platform === 'Android' ? '安卓' : item.platform;
+        const pClass = item.platform === 'PC' ? 'pc' : item.platform === 'Android' ? 'android' : 'ios';
+        const timeClass = item.time.includes('*') ? ' style="color:#f59e0b;"' : '';
+        return `<div class="row" style="animation-delay:${Math.min(i*30,300)}ms">
+          <div class="r-rank ${rankClass}">${rank}</div>
+          <div class="r-source">
+            ${item.source ? '<a href="' + escapeHtml(item.source.startsWith('http') ? item.source : 'http://'+item.source) + '" target="_blank">' + escapeHtml(item.source) + '</a>' : '-'}
+          </div>
+          <div class="r-time"${timeClass}>${escapeHtml(item.time)}</div>
+          <div><span class="r-platform ${pClass}">${escapeHtml(pText)}</span></div>
+          <div class="r-date">${escapeHtml(item.date || '')}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== 计算排名 =====
+    function playerKey(item) {
+      const name = (item.player || '').toLowerCase().trim();
+      const hpRaw = (item.homepage || '').toLowerCase().trim();
+      if (!hpRaw || hpRaw === '*' || hpRaw === '因无法确认其身份，故作标记处理') return name;
+      const lines = hpRaw.split(/\n/).map(l => l.trim());
+      const primary = lines.find(l => l && l !== '*') || '';
+      return primary ? name + '|' + primary : name;
+    }
+
+    function computePlayerRanks() {
+      const best = {};
+      allData.forEach(item => {
+        const key = playerKey(item);
+        if (!best[key]) best[key] = { PC: null, Android: null, iOS: null };
+        if (best[key][item.platform] === null || item._sec < best[key][item.platform]) {
+          best[key][item.platform] = item._sec;
+        }
+      });
+      const ranks = {};
+      ['PC', 'Android', 'iOS'].forEach(plat => {
+        const sorted = Object.entries(best)
+          .filter(([_, times]) => times[plat] !== null)
+          .sort((a, b) => a[1][plat] - b[1][plat]);
+        sorted.forEach(([key], i) => {
+          if (!ranks[key]) ranks[key] = {};
+          ranks[key][plat] = i + 1;
+        });
+      });
+      // 用当前玩家的身份键查找排名
+      const myKey = playerKey({ player: playerName, homepage: playerHomepage || undefined });
+      return ranks[myKey] || {};
+    }
+
+    // ===== 生成长图 =====
+    let _html2canvasLoading = false;
+    function loadHtml2Canvas(cb) {
+      if (window.html2canvas) { cb(); return; }
+      if (_html2canvasLoading) { setTimeout(() => loadHtml2Canvas(cb), 200); return; }
+      _html2canvasLoading = true;
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.onload = () => { _html2canvasLoading = false; cb(); };
+      s.onerror = () => { _html2canvasLoading = false; alert('无法加载图片生成库，请检查网络连接'); };
+      document.head.appendChild(s);
+    }
+
+    function generateImage() {
+      const btn = document.getElementById('genBtn');
+      if (btn.disabled) return;
+      if (playerRecords.length === 0) { alert('暂无数据'); return; }
+
+      // 应用当前过滤和排序
+      let items = playerRecords.slice();
+      if (currentPlat !== 'all') {
+        items = items.filter(i => i.platform === currentPlat);
+      }
+      if (items.length === 0) { alert('当前筛选下暂无纪录'); return; }
+      if (currentSort === 'time_asc') items.sort((a,b) => a._sec - b._sec);
+      else if (currentSort === 'time_desc') items.sort((a,b) => b._sec - a._sec);
+      else if (currentSort === 'date_asc') items.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      else if (currentSort === 'date_desc') items.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      loadHtml2Canvas(() => {
+        btn.textContent = '生成中...';
+        btn.disabled = true;
+
+        const pr = playerRankInfo;
+        const rankText = [];
+        if (pr.PC) rankText.push('PC #' + pr.PC);
+        else rankText.push('PC —');
+        if (pr.Android) rankText.push('安卓 #' + pr.Android);
+        else rankText.push('安卓 —');
+        if (pr.iOS) rankText.push('iOS #' + pr.iOS);
+        else rankText.push('iOS —');
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;display:flex;flex-direction:column;gap:16px;padding:24px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;align-items:baseline;gap:12px;';
+        header.innerHTML = '<span style="font-size:22px;font-weight:800;color:#1f2533;">' + escapeHtml(playerName) + '</span>' +
+          '<span style="font-size:14px;color:#8a93a8;">' + rankText.join(' · ') + '</span>';
+        wrapper.appendChild(header);
+
+        const tip = document.createElement('div');
+        tip.style.cssText = 'font-size:12px;color:#856404;padding:8px 12px;background:#fef3cd;border:1px solid #ffc107;border-radius:8px;';
+        tip.textContent = '通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认';
+        wrapper.appendChild(tip);
+
+        const perColumn = 100;
+        const columnsRow = document.createElement('div');
+        columnsRow.style.cssText = 'display:flex;gap:20px;align-items:flex-start;flex-wrap:nowrap;';
+
+        for (let start = 0; start < items.length; start += perColumn) {
+          const col = document.createElement('div');
+          col.style.cssText = 'display:flex;flex-direction:column;gap:2px;background:#ffffff;border-radius:10px;padding:10px;box-shadow:0 1px 3px rgba(20,30,60,.06),0 1px 2px rgba(20,30,60,.04);width:370px;flex-shrink:0;';
+          const slice = items.slice(start, start + perColumn);
+          slice.forEach((item, i) => {
+            const rank = start + i + 1;
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;gap:0;padding:5px 10px;border-radius:4px;font-size:12px;white-space:nowrap;';
+            if (i % 2 === 1) row.style.background = '#f8f9fc';
+            const pText = item.platform === 'Android' ? '安卓' : item.platform;
+            const rankColor = rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : rank === 3 ? '#c2750c' : '#000';
+            const pBg = item.platform === 'PC' ? '#e0edff' : item.platform === 'Android' ? '#d1fae5' : '#e5e7eb';
+            const pColor = item.platform === 'PC' ? '#2563eb' : item.platform === 'Android' ? '#059669' : '#1f2937';
+            row.innerHTML = '<span style="width:32px;text-align:center;font-weight:800;font-size:13px;color:' + rankColor + ';flex-shrink:0;">' + rank + '</span>' +
+              '<span style="margin:0 8px;font-weight:600;color:#1f2533;">' + escapeHtml(item.time) + '</span>' +
+              '<span style="margin-left:auto;margin-right:8px;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:' + pBg + ';color:' + pColor + ';flex-shrink:0;">' + escapeHtml(pText) + '</span>' +
+              '<span style="color:#8a93a8;font-size:11px;flex-shrink:0;width:88px;text-align:right;">' + escapeHtml(item.date || '') + '</span>';
+            col.appendChild(row);
+          });
+          columnsRow.appendChild(col);
+        }
+        wrapper.appendChild(columnsRow);
+        document.body.appendChild(wrapper);
+
+        html2canvas(wrapper, {
+          backgroundColor: '#f5f6fb',
+          scale: 2,
+          useCORS: true,
+          logging: false,
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'CGOI_' + playerName.replace(/[\/\\?%*:|"<>]/g, '_') + '_' + formatDate(new Date()) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          document.body.removeChild(wrapper);
+          btn.textContent = '生成长图';
+          btn.disabled = false;
+        }).catch(err => {
+          document.body.removeChild(wrapper);
+          btn.textContent = '生成长图';
+          btn.disabled = false;
+          alert('生成失败：' + err.message);
+        });
+      });
+    }
+
+    document.getElementById('sortField').addEventListener('change', e => {
+      currentSort = e.target.value;
+      render();
+    });
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPlat = btn.dataset.plat;
+        render();
+      });
+    });
+
+
+
+    function flattenGrouped(data) {
+      const addMeta = (item) => {
+        item._sec = parseTimePlay(item.time);
+        return item;
+      };
+      if (!Array.isArray(data) || data.length === 0) return data || [];
+      if (data[0].records) {
+        const flat = [];
+        data.forEach(group => {
+          (group.records || []).forEach(rec => {
+            flat.push(addMeta({
+              player: group.player,
+              homepage: group.homepage,
+              time: rec.time,
+              platform: normalizePlatform(rec.platform),
+              date: rec.date,
+              source: rec.source,
+              alias: rec.alias
+            }));
+          });
+        });
+        return flat;
+      }
+      return data.map(d => addMeta({ ...d, platform: normalizePlatform(d.platform) }));
+    }
+
+    fetch('data.json')
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        allData = flattenGrouped(data);
+        playerRecords = allData.filter(i => matchesPlayer(i));
+        playerRecords.sort((a, b) => a._sec - b._sec);
+        playerRankInfo = computePlayerRanks();
+
+        const pr = playerRankInfo;
+        const rankEl = document.getElementById('playerRanks');
+        const parts = [];
+        if (pr.PC) parts.push('PC <strong>#' + pr.PC + '</strong>');
+        else parts.push('PC <strong>—</strong>');
+        if (pr.Android) parts.push('安卓 <strong>#' + pr.Android + '</strong>');
+        else parts.push('安卓 <strong>—</strong>');
+        if (pr.iOS) parts.push('iOS <strong>#' + pr.iOS + '</strong>');
+        else parts.push('iOS <strong>—</strong>');
+        rankEl.innerHTML = parts.map(p => '<span>' + p + '</span>').join('');
+
+        // 主页链接
+        const allHps = new Set();
+        playerRecords.forEach(r => {
+          if (r.homepage) {
+            (r.homepage).split(/\n/).map(l => l.trim()).filter(l => l && l !== '*').forEach(l => allHps.add(l));
+          }
+        });
+        allHps.forEach(hp => {
+          const hlink = document.createElement('a');
+          hlink.className = 'player-hpage';
+          hlink.href = hp.startsWith('http') ? hp : 'http://' + hp;
+          hlink.target = '_blank';
+          hlink.rel = 'noopener';
+          hlink.textContent = '主页';
+          hlink.title = hp;
+          document.getElementById('playerTitle').appendChild(hlink);
+        });
+        if (playerRecords.some(r => (r.homepage || '').includes('*'))) {
+          const marker = document.createElement('span');
+          marker.style.cssText = 'font-size:12px;color:#dc3545;font-weight:600;margin-left:8px;';
+          marker.textContent = '身份未确认';
+          document.getElementById('playerTitle').appendChild(marker);
+        }
+
+        render();
+      })
+      .catch(err => {
+        document.getElementById('loading').innerHTML =
+          '<div>加载失败：' + escapeHtml(err.message) + '</div>';
+      });
+  </script>
+</body>
+</html>

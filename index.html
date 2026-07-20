@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta property="og:image" content="favicon.png">
+  <meta property="og:image:width" content="64">
+  <meta property="og:image:height" content="64">
+  <title>CGOI 排行榜</title>
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --card: #ffffff;
+      --border: #e8eaf1;
+      --text: #1f2533;
+      --muted: #8a93a8;
+      --primary: #5b6cff;
+      --primary-light: #eef0ff;
+      --pc: #2563eb;
+      --pc-bg: #e0edff;
+      --android: #059669;
+      --android-bg: #d1fae5;
+      --ios: #1f2937;
+      --ios-bg: #e5e7eb;
+      --gold: #f59e0b;
+      --silver: #94a3b8;
+      --bronze: #c2750c;
+      --shadow: 0 1px 3px rgba(20,30,60,.06), 0 1px 2px rgba(20,30,60,.04);
+      --shadow-hover: 0 8px 24px rgba(91,108,255,.14);
+    }
+
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Roboto, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== 顶部 Header ===== */
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+      color: #fff;
+      padding: 36px 24px 30px;
+      position: relative;
+      z-index: 999;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 40%),
+        radial-gradient(circle at 85% 0%, rgba(255,255,255,.12), transparent 35%);
+      pointer-events: none;
+    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: .5px;
+    }
+
+    /* ===== 工具栏 ===== */
+    .toolbar {
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 12px rgba(20,30,60,.05);
+    }
+    .toolbar-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      background: #eef0f6;
+      padding: 4px;
+      border-radius: 12px;
+    }
+    .filter-btn {
+      padding: 8px 18px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+    }
+    .filter-btn:hover { color: var(--text); }
+    .filter-btn.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    .search-field {
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .search-container {
+      flex: 1;
+      min-width: 280px;
+      display: flex;
+      gap: 10px;
+    }
+    .search-input-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .search-input {
+      width: 100%;
+      padding: 11px 14px 11px 42px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      background: #fff;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .generate-img-btn {
+      padding: 8px 18px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    .generate-img-btn:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+    .generate-img-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .submit-btn {
+      padding: 8px 18px;
+      border: 2px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 9px;
+      transition: all .2s;
+      white-space: nowrap;
+      line-height: 1.4;
+      text-decoration: none;
+    }
+    .submit-btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+    .notice-wrap {
+      max-width: 1200px;
+      margin: 18px auto 14px;
+      padding: 0 24px;
+    }
+    .notice {
+      padding: 10px 16px;
+      background: #fef3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #856404;
+      font-weight: 500;
+      width: fit-content;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* ===== 主体 ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px 24px 60px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 22px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      flex-wrap: wrap;
+    }
+    .stats span strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .stats .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ===== 行卡片 ===== */
+    .row {
+      display: grid;
+      grid-template-columns: 40px minmax(160px,1.2fr) minmax(220px,1.5fr) auto auto;
+      gap: 18px;
+      align-items: center;
+      background: var(--card);
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      transition: transform .18s, box-shadow .18s, border-color .18s;
+      animation: fade .35s ease both;
+    }
+    .row:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+      border-color: #d8dcf0;
+    }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .rank {
+      font-size: 20px;
+      font-weight: 800;
+      color: #000000; /* 其他的数字就是纯黑色 */
+      text-align: center;
+      line-height: 1;
+    }
+    .rank-1 { color: var(--gold); }
+    .rank-2 { color: var(--silver); }
+    .rank-3 { color: var(--bronze); }
+
+    .player-info { min-width: 0; overflow-wrap: break-word; word-break: break-all; }
+    .player-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.3;
+    }
+    .player-link {
+      color: var(--text);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .player-link:hover { color: var(--primary); text-decoration: underline; }
+    .player-alias {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .player-rank-row {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.5;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .player-rank-row .pr-item { white-space: nowrap; }
+    .player-rank-row .pr-val { color: #999; }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .link-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .link-label {
+      color: var(--muted);
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+    .link-content {
+      word-break: break-all;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .link-content:hover { text-decoration: underline; }
+    .link-content.plain { color: var(--text); pointer-events: none; }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      min-width: 90px;
+    }
+    .date {
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .platform-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .pc { background: var(--pc-bg); color: var(--pc); }
+    .android { background: var(--android-bg); color: var(--android); }
+    .ios { background: var(--ios-bg); color: var(--ios); }
+
+    .time {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .time-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: 2px;
+    }
+
+    /* ===== 页脚 ===== */
+    .footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px 32px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+    .footer a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .footer a:hover { color: var(--text); }
+    .footer svg { flex-shrink: 0; }
+
+    /* ===== 空状态 / 加载 ===== */
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+    }
+    .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: .6; }
+    .empty-text { font-size: 15px; font-weight: 500; }
+
+    #loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 导航菜单 ===== */
+    .nav-menu { position: relative; }
+    .nav-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,.3); }
+    .nav-dropdown {
+      position: absolute;
+      top: 44px;
+      right: 0;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(20,30,60,.12);
+      min-width: 140px;
+      display: none;
+      z-index: 100;
+    }
+    .nav-dropdown.show { display: block; }
+    .nav-dropdown a {
+      display: block;
+      padding: 10px 16px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .nav-dropdown a:first-child { border-radius: 10px 10px 0 0; }
+    .nav-dropdown a:last-child { border-radius: 0 0 10px 10px; }
+    .nav-dropdown a:hover { background: var(--primary-light); color: var(--primary); }
+    .nav-dropdown a.active { color: var(--primary); background: var(--primary-light); }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 820px) {
+      .row {
+        grid-template-columns: 36px 1fr auto;
+        grid-template-areas:
+          "rank player time"
+          "rank links  links"
+          "rank meta   meta";
+        gap: 10px 14px;
+      }
+      .rank { grid-area: rank; font-size: 18px; }
+      .player-info { grid-area: player; }
+      .links { grid-area: links; }
+      .meta {
+        grid-area: meta;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .time { grid-area: time; font-size: 17px; }
+      .header h1 { font-size: 24px; }
+      .filter-btn { padding: 6px 12px; font-size: 13px; }
+      .generate-img-btn, .submit-btn { padding: 6px 12px; font-size: 13px; }
+      .toolbar { padding: 10px 14px; }
+      .search-container { min-width: 100%; }
+      .search-field { padding: 8px 12px; font-size: 13px; }
+      .search-input { padding: 8px 12px 8px 36px; font-size: 13px; }
+      .container { padding: 14px 14px 40px; }
+    }
+    @media (max-width: 480px) {
+      .filter-group { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .filter-btn { padding: 5px 10px; font-size: 12px; white-space: nowrap; }
+      .generate-img-btn, .submit-btn { padding: 5px 10px; font-size: 12px; }
+      .toolbar-content { gap: 8px; }
+      .header { padding: 24px 16px 20px; }
+      .header h1 { font-size: 20px; }
+      .row { padding: 12px 14px; gap: 8px 10px; }
+      .stats { gap: 10px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <h1>CGOI 排行榜</h1>
+      <div class="nav-menu">
+        <button class="nav-btn" id="navBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="nav-dropdown" id="navDropdown">
+          <a href="index.html" class="active">主榜</a>
+          <a href="cr.html">历届 CR</a>
+          <a href="distribution.html">时间分布</a>
+          <a href="admin.html">管理</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-content">
+      <div class="filter-group" role="tablist">
+        <button class="filter-btn active" data-platform="all">全部</button>
+        <button class="filter-btn" data-platform="PC">PC</button>
+        <button class="filter-btn" data-platform="Mobile">移动端</button>
+        <button class="filter-btn" data-platform="Android">安卓</button>
+        <button class="filter-btn" data-platform="iOS">iOS</button>
+      </div>
+      
+      <select class="search-field" id="sortField" aria-label="排序方式">
+        <option value="default">默认排名</option>
+        <option value="time_asc">通关时间 (快→慢)</option>
+        <option value="time_desc">通关时间 (慢→快)</option>
+        <option value="date_asc">发布时间 (早→晚)</option>
+        <option value="date_desc">发布时间 (晚→早)</option>
+      </select>
+
+      <div class="search-container">
+        <select class="search-field" id="searchField" aria-label="搜索字段">
+          <option value="player">玩家名</option>
+          <option value="source">来源</option>
+          <option value="homepage">主页</option>
+          <option value="date">发布时间</option>
+          <option value="time">通关时间</option>
+        </select>
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="输入关键词搜索...">
+        </div>
+      </div>
+      <div class="toolbar-actions">
+        <button class="generate-img-btn" onclick="generateLongImage()">生成长图</button>
+        <a class="submit-btn" href="https://www.bilibili.com/opus/1063135015717568564" target="_blank" rel="noopener">提交纪录</a>
+      </div>
+    </div>
+  </div>
+
+   <div class="notice-wrap"><div class="notice">通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认</div></div>
+
+  <div class="container">
+    <div class="stats" id="stats"></div>
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty" style="display:none;">
+      <div class="empty-text">没有找到匹配的记录</div>
+    </div>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div>正在加载数据...</div>
+    </div>
+  </div>
+
+  <script>
+    let allData = [];
+    let currentPlatform = 'all';
+    let currentSearch = '';
+    let currentField = 'player';
+    let currentSort = 'default';
+    let playerRanks = {};
+
+    // ===== 玩家身份键（名字 + 主页） =====
+    function playerKey(item) {
+      const name = (item.player || '').toLowerCase().trim();
+      const hpRaw = (item.homepage || '').toLowerCase().trim();
+      if (!hpRaw || hpRaw === '*' || hpRaw === '因无法确认其身份，故作标记处理') return name;
+      const lines = hpRaw.split(/\n/).map(l => l.trim());
+      const primary = lines.find(l => l && l !== '*') || '';
+      return primary ? name + '|' + primary : name;
+    }
+
+    function renderHomepages(homepage) {
+      if (!homepage) return '';
+      const lines = homepage.split(/\n/).map(l => l.trim()).filter(l => l);
+      return lines.map(l => {
+        if (l === '*') return '<span style="color:#dc3545;font-weight:600;">身份未确认</span>';
+        return renderLink(l);
+      }).join('');
+    }
+
+    // ===== 计算各平台玩家排名 =====
+    function computeRanks() {
+      const best = {};
+      allData.forEach(item => {
+        if (!best[item._key]) best[item._key] = { PC: null, Android: null, iOS: null, player: item.player, homepage: item.homepage };
+        if (best[item._key][item.platform] === null || item._sec < best[item._key][item.platform]) {
+          best[item._key][item.platform] = item._sec;
+        }
+      });
+      playerRanks = {};
+      ['PC', 'Android', 'iOS'].forEach(plat => {
+        const sorted = Object.entries(best)
+          .filter(([_, v]) => v[plat] !== null)
+          .sort((a, b) => a[1][plat] - b[1][plat]);
+        sorted.forEach(([key, v], i) => {
+          if (!playerRanks[key]) playerRanks[key] = {};
+          playerRanks[key][plat] = i + 1;
+        });
+      });
+    }
+
+    // 导航菜单
+    document.getElementById('navBtn').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('navDropdown').classList.toggle('show');
+    });
+    document.addEventListener('click', () => document.getElementById('navDropdown').classList.remove('show'));
+
+
+
+    // 平台名称统一映射
+    function normalizePlatform(p) {
+      if (!p) return '其他';
+      const low = String(p).toLowerCase();
+      if (low.includes('pc') || low.includes('电脑')) return 'PC';
+      if (low.includes('ios') || low.includes('苹果') || low.includes('iphone') || low.includes('ipad')) return 'iOS';
+      if (low.includes('android') || low.includes('安卓') || low.includes('手机')) return 'Android';
+      return '其他';
+    }
+
+    function escapeHtml(s) {
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderLink(url) {
+      if (!url) return '';
+      const isUrl = /^(https?:\/\/|www\.|b23\.tv|space\.bilibili)/i.test(url);
+      if (isUrl) {
+        const href = url.startsWith('http') ? url : 'http://' + url;
+        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener" class="link-content">${escapeHtml(url)}</a>`;
+      }
+      return `<span class="link-content plain">${escapeHtml(url)}</span>`;
+    }
+
+    // 参考提供的 C# 逻辑实现的时间解析
+    function parseTimePlay(tp) {
+      if (!tp) return 0;
+
+      let hasStar = tp.includes("*");
+      let processedStr = tp.replace(/\*/g, "");
+
+      let hasQuestionMark = processedStr.includes("?");
+      processedStr = processedStr.replace(/\?/g, "9");
+
+      let hours = 0, minutes = 0, seconds = 0;
+
+      let hMatch = processedStr.match(/([\d\.]+)h/);
+      if (hMatch) hours = parseFloat(hMatch[1]) || 0;
+
+      let mMatch = processedStr.match(/([\d\.]+)m/);
+      if (mMatch) minutes = parseFloat(mMatch[1]) || 0;
+
+      let secStr = processedStr.replace(/[\d\.]+[hm]/g, "");
+      secStr = secStr.replace(/s/g, "").trim();
+      if (secStr) {
+        seconds = parseFloat(secStr) || 0;
+      }
+
+      let totalSeconds = hours * 3600.0 + minutes * 60.0 + seconds;
+
+      // 【核心逻辑1】：如果包含 ?，则向上取整到整秒
+      if (hasQuestionMark) {
+        totalSeconds = Math.ceil(totalSeconds);
+      }
+
+      // 【核心逻辑2】：如果包含 * (TAS/辅助标记)，则加上 100 小时 (360,000 秒)
+      if (hasStar) {
+        totalSeconds += 360000.0;
+      }
+
+      return totalSeconds;
+    }
+
+    // 参考提供的 C# 逻辑实现的日期比较
+    function compareDates(a, b) {
+      let dateA = new Date(a.date);
+      let dateB = new Date(b.date);
+      let validA = !isNaN(dateA.getTime());
+      let validB = !isNaN(dateB.getTime());
+
+      if (!validA && !validB) return 0;
+      if (!validA) return 1;  // 无效日期排后面
+      if (!validB) return -1; // 无效日期排后面
+      
+      return dateA.getTime() - dateB.getTime();
+    }
+
+    function render() {
+      let filtered = [...allData];
+
+      if (currentPlatform === 'Mobile') {
+        filtered = filtered.filter(i => i.platform === 'Android' || i.platform === 'iOS');
+      } else if (currentPlatform !== 'all') {
+        filtered = filtered.filter(i => i.platform === currentPlatform);
+      }
+      // 去重：同一个玩家只保留最好成绩，全部/PC/移动端均去重（用预解析的 _sec/_key）
+      {
+        const best = {};
+        filtered.forEach(item => {
+          if (!best[item._key] || item._sec < best[item._key]._sec) {
+            best[item._key] = item;
+          }
+        });
+        filtered = Object.values(best);
+      }
+
+      if (currentSearch) {
+        const q = currentSearch.toLowerCase().trim();
+        filtered = filtered.filter(i => {
+          const v = (i[currentField] || '').toString().toLowerCase();
+          return v.includes(q);
+        });
+      }
+
+      // 排序逻辑（用预解析的 _sec）
+      if (currentSort === 'time_asc' || currentSort === 'default') {
+        filtered.sort((a, b) => a._sec - b._sec);
+      } else if (currentSort === 'time_desc') {
+        filtered.sort((a, b) => b._sec - a._sec);
+      } else if (currentSort === 'date_asc') {
+        filtered.sort((a, b) => compareDates(a, b));
+      } else if (currentSort === 'date_desc') {
+        filtered.sort((a, b) => compareDates(b, a));
+      }
+
+      const stats = document.getElementById('stats');
+      const totalPlayers = new Set(filtered.map(i => i.player)).size;
+      const pcCount = filtered.filter(i => i.platform === 'PC').length;
+      const andCount = filtered.filter(i => i.platform === 'Android').length;
+      const iosCount = filtered.filter(i => i.platform === 'iOS').length;
+      
+      stats.innerHTML = `
+        <span>共 <strong>${filtered.length}</strong> 条记录 · <strong>${totalPlayers}</strong> 位玩家</span>
+        <span><span class="dot" style="background:var(--pc)"></span>PC: <strong>${pcCount}</strong></span>
+        <span><span class="dot" style="background:var(--android)"></span>安卓: <strong>${andCount}</strong></span>
+        <span><span class="dot" style="background:var(--ios)"></span>iOS: <strong>${iosCount}</strong></span>
+      `;
+
+      const list = document.getElementById('list');
+      const empty = document.getElementById('empty');
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+
+      list.innerHTML = filtered.map((item, index) => {
+        const rank = index + 1;
+        const rankClass = rank <= 3 ? `rank-${rank}` : '';
+        
+        const pText = item.platform === 'Android' ? '安卓' : item.platform;
+        const pClass = item.platform === 'PC' ? 'pc' : item.platform === 'Android' ? 'android' : 'ios';
+
+        const pr = playerRanks[item._key] || {};
+        const rankParts = [];
+        if (pr.PC) rankParts.push('<span class="pr-item">PC <span class="pr-val">#' + pr.PC + '</span></span>');
+        else rankParts.push('<span class="pr-item">PC <span class="pr-val">—</span></span>');
+        if (pr.Android) rankParts.push('<span class="pr-item">安卓 <span class="pr-val">#' + pr.Android + '</span></span>');
+        else rankParts.push('<span class="pr-item">安卓 <span class="pr-val">—</span></span>');
+        if (pr.iOS) rankParts.push('<span class="pr-item">iOS <span class="pr-val">#' + pr.iOS + '</span></span>');
+        else rankParts.push('<span class="pr-item">iOS <span class="pr-val">—</span></span>');
+
+        const playerHref = 'player.html?name=' + encodeURIComponent(item.player) + (item.homepage ? '&homepage=' + encodeURIComponent(item.homepage) : '');
+
+        return `
+          <div class="row" style="animation-delay:${Math.min(index*20,300)}ms">
+            <div class="rank ${rankClass}">${rank}</div>
+            <div class="player-info">
+              <div class="player-name">
+                <a class="player-link" href="${playerHref}">${escapeHtml(item.player)}</a>
+              </div>
+              ${item.alias ? `<div class="player-alias">${escapeHtml(item.alias)}</div>` : ''}
+              <div class="player-rank-row">${rankParts.join(' · ')}</div>
+            </div>
+            <div class="links">
+              ${item.source ? `<div class="link-row"><span class="link-label">来源</span>${renderLink(item.source)}</div>` : ''}
+              ${item.homepage ? `<div class="link-row"><span class="link-label">主页</span>${renderHomepages(item.homepage)}</div>` : ''}
+            </div>
+            <div class="meta">
+              <span class="platform-badge ${pClass}">${escapeHtml(pText)}</span>
+              <span class="date">${escapeHtml(item.date || '')}</span>
+            </div>
+            <div class="time">
+              ${escapeHtml(item.time)}
+              <span class="time-label">通关时间</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== 生成长图 =====
+    let _html2canvasLoading = false;
+    function loadHtml2Canvas(cb) {
+      if (window.html2canvas) { cb(); return; }
+      if (_html2canvasLoading) { setTimeout(() => loadHtml2Canvas(cb), 200); return; }
+      _html2canvasLoading = true;
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.onload = () => { _html2canvasLoading = false; cb(); };
+      s.onerror = () => { _html2canvasLoading = false; alert('无法加载图片生成库，请检查网络连接'); };
+      document.head.appendChild(s);
+    }
+
+    function formatDate(d) {
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function buildImageWrapper(items, label) {
+      const perColumn = 100;
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;display:flex;flex-direction:column;gap:16px;padding:24px;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;';
+
+      // 标题栏
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:baseline;gap:14px;';
+      header.innerHTML = '<span style="font-size:22px;font-weight:800;color:var(--text);">CGOI 排行榜 - ' + label + '</span>' +
+        '<span style="font-size:13px;color:var(--muted);font-weight:500;">' + formatDate(new Date()) + '</span>';
+      wrapper.appendChild(header);
+
+      // 提示
+      const tip = document.createElement('div');
+      tip.style.cssText = 'font-size:12px;color:#856404;padding:8px 12px;background:#fef3cd;border:1px solid #ffc107;border-radius:8px;width:fit-content;';
+      tip.textContent = '通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认';
+      wrapper.appendChild(tip);
+
+      // 列容器
+      const columnsRow = document.createElement('div');
+      columnsRow.style.cssText = 'display:inline-flex;gap:20px;align-items:flex-start;';
+
+      for (let start = 0; start < items.length; start += perColumn) {
+        const col = document.createElement('div');
+        col.style.cssText = 'display:flex;flex-direction:column;gap:2px;background:var(--card);border-radius:10px;padding:10px;box-shadow:var(--shadow);min-width:340px;';
+
+        const slice = items.slice(start, start + perColumn);
+        slice.forEach((item, i) => {
+          const rank = start + i + 1;
+          const row = document.createElement('div');
+          row.style.cssText = 'display:grid;grid-template-columns:32px 1fr auto auto;gap:8px;align-items:center;padding:5px 10px;border-radius:4px;font-size:12px;';
+          if (i % 2 === 1) row.style.background = '#f8f9fc';
+
+          const pText = item.platform === 'Android' ? '安卓' : item.platform;
+          const rankColor = rank === 1 ? '#f59e0b' : rank === 2 ? '#94a3b8' : rank === 3 ? '#c2750c' : '#000';
+          const pBg = item.platform === 'PC' ? '#e0edff' : item.platform === 'Android' ? '#d1fae5' : '#e5e7eb';
+          const pColor = item.platform === 'PC' ? '#2563eb' : item.platform === 'Android' ? '#059669' : '#1f2937';
+
+          row.innerHTML = '<div style="font-weight:800;color:' + rankColor + ';text-align:center;font-size:13px;">' + rank + '</div>' +
+            '<div style="min-width:0;line-height:1.3;"><span style="font-weight:600;color:var(--text);">' + escapeHtml(item.player) + '</span>' +
+            (item.alias ? '<span style="color:var(--muted);font-size:11px;margin-left:4px;">' + escapeHtml(item.alias) + '</span>' : '') + '</div>' +
+            '<div style="padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;background:' + pBg + ';color:' + pColor + ';">' + escapeHtml(pText) + '</div>' +
+            '<div style="font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-size:12px;">' + escapeHtml(item.time || '') + '</div>';
+          col.appendChild(row);
+        });
+        columnsRow.appendChild(col);
+      }
+      wrapper.appendChild(columnsRow);
+      return wrapper;
+    }
+
+    function downloadCanvas(canvas, suffix) {
+      const dateStr = formatDate(new Date());
+      const link = document.createElement('a');
+      link.download = 'CGOI排行榜_' + suffix + '_' + dateStr + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function generateLongImage() {
+      const btn = document.querySelector('.generate-img-btn');
+      if (btn.disabled) return;
+      if (allData.length === 0) { alert('暂无数据'); return; }
+
+      // 去重：按平台取每个玩家的最好成绩（按名字+主页判断身份）
+      function dedupBest(list) {
+        const best = {};
+        list.forEach(item => {
+          const key = playerKey(item);
+          if (!best[item._key] || item._sec < best[item._key]._sec) {
+            best[item._key] = item;
+          }
+        });
+        return Object.values(best).sort((a, b) => a._sec - b._sec);
+      }
+
+      const pcItems = dedupBest(allData.filter(i => i.platform === 'PC'));
+      const mobileItems = dedupBest(allData.filter(i => i.platform === 'Android' || i.platform === 'iOS'));
+
+      if (pcItems.length === 0 && mobileItems.length === 0) { alert('暂无数据'); return; }
+
+      loadHtml2Canvas(() => {
+        btn.textContent = '生成中 (1/2)...';
+        btn.disabled = true;
+
+        let captured = 0;
+        const total = (pcItems.length > 0 ? 1 : 0) + (mobileItems.length > 0 ? 1 : 0);
+
+        function captureAndDownload(items, label, suffix, next) {
+          if (items.length === 0) { next(); return; }
+          const wrapper = buildImageWrapper(items, label);
+          document.body.appendChild(wrapper);
+          html2canvas(wrapper, {
+            backgroundColor: '#f5f6fb',
+            scale: 2,
+            useCORS: true,
+            logging: false,
+          }).then(canvas => {
+            downloadCanvas(canvas, suffix);
+            document.body.removeChild(wrapper);
+            captured++;
+            if (captured < total) {
+              btn.textContent = '生成中 (' + (captured + 1) + '/' + total + ')...';
+            }
+            next();
+          }).catch(err => {
+            document.body.removeChild(wrapper);
+            btn.textContent = '生成长图';
+            btn.disabled = false;
+            alert('生成失败：' + err.message);
+          });
+        }
+
+        captureAndDownload(pcItems, 'PC', 'PC', () => {
+          captureAndDownload(mobileItems, '移动端', 'Mobile', () => {
+            btn.textContent = '生成长图';
+            btn.disabled = false;
+          });
+        });
+      });
+    }
+
+    // 平台过滤
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPlatform = btn.dataset.platform;
+        render();
+      });
+    });
+
+    // 排序字段切换
+    document.getElementById('sortField').addEventListener('change', e => {
+      currentSort = e.target.value;
+      render();
+    });
+
+    // 搜索字段切换
+    document.getElementById('searchField').addEventListener('change', e => {
+      currentField = e.target.value;
+      const input = document.getElementById('searchInput');
+      const labels = {
+        player: '输入玩家名...',
+        source: '输入来源链接关键词...',
+        homepage: '输入主页链接关键词...',
+        date: '输入发布时间，如 2024-01...',
+        time: '输入通关时间，如 00:12...'
+      };
+      input.placeholder = labels[currentField] || '输入关键词搜索...';
+      render();
+    });
+
+    // 搜索输入
+    let searchTimer = null;
+    document.getElementById('searchInput').addEventListener('input', e => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        currentSearch = e.target.value;
+        render();
+      }, 120);
+    });
+
+    // 展平分组格式（如有 records 字段则展平，否则直接使用）
+    function flattenGrouped(data) {
+      const addMeta = (item) => {
+        item._sec = parseTimePlay(item.time);
+        item._key = playerKey(item);
+        return item;
+      };
+      if (!Array.isArray(data) || data.length === 0) return data || [];
+      if (data[0].records) {
+        const flat = [];
+        data.forEach(group => {
+          (group.records || []).forEach(rec => {
+            flat.push(addMeta({
+              player: group.player,
+              homepage: group.homepage,
+              time: rec.time,
+              platform: normalizePlatform(rec.platform),
+              date: rec.date,
+              source: rec.source,
+              alias: rec.alias
+            }));
+          });
+        });
+        return flat;
+      }
+      return data.map(d => addMeta({ ...d, platform: normalizePlatform(d.platform) }));
+    }
+
+    // 加载数据
+    fetch('data.json')
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(data => {
+        allData = flattenGrouped(data);
+
+        computeRanks();
+        document.getElementById('loading').style.display = 'none';
+        render();
+      })
+      .catch(err => {
+        const loading = document.getElementById('loading');
+        loading.innerHTML = `
+          <div>加载失败：${escapeHtml(err.message)}</div>
+          <div style="margin-top:10px;font-size:13px;max-width:400px;margin-left:auto;margin-right:auto;line-height:1.6;">
+            提示：请勿直接双击打开 HTML 文件。请使用本地 Web 服务器运行（如 VS Code 的 Live Server 插件），并确保 data.json 与 html 文件在同一目录下。
+          </div>
+        `;
+      });
+  </script>
+  <div class="footer">
+    <a href="https://github.com/aWinHimOP/CGOIRankList" target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <a href="https://qm.qq.com/q/L1UGIw9Dsy" target="_blank" rel="noopener">
+      <img src="https://cdn.simpleicons.org/qq/12B7F5" width="20" height="20" alt="QQ">
+      <span>549361403</span>
+    </a>
+  </div>
+</body>
+</html>

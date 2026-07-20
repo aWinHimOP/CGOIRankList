@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>通关时间分布 - CGOI</title>
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --card: #ffffff;
+      --border: #e8eaf1;
+      --text: #1f2533;
+      --muted: #8a93a8;
+      --primary: #5b6cff;
+      --primary-light: #eef0ff;
+      --pc: #2563eb;
+      --pc-bg: #e0edff;
+      --android: #059669;
+      --android-bg: #d1fae5;
+      --ios: #1f2937;
+      --ios-bg: #e5e7eb;
+      --gold: #f59e0b;
+      --silver: #94a3b8;
+      --shadow: 0 1px 3px rgba(20,30,60,.06),0 1px 2px rgba(20,30,60,.04);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,sans-serif;
+      margin: 0; background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #9333ea 100%);
+      color: #fff; padding: 28px 24px 24px;
+    }
+    .header-inner { max-width: 1100px; margin: 0 auto; }
+    .back-link { color: rgba(255,255,255,.7); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .back-link:hover { color: #fff; }
+    .header h1 { margin: 8px 0 0; font-size: 24px; font-weight: 800; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px 24px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 18px; box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    .filter-group { display: flex; gap: 2px; }
+    .filter-btn {
+      border: none; background: transparent; color: var(--muted); font-size: 13px;
+      font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all .15s;
+    }
+    .filter-btn.active { background: var(--primary); color: #fff; }
+    .filter-btn:hover:not(.active) { background: var(--primary-light); color: var(--primary); }
+    label.toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+    input[type="checkbox"] { accent-color: var(--primary); }
+    select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px;
+      font-size: 13px; background: var(--card); color: var(--text); font-family: inherit;
+    }
+    .chart-wrap {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px; box-shadow: var(--shadow); margin-bottom: 16px; position: relative;
+    }
+    canvas { display: block; width: 100%; height: auto; }
+    .self-input {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 18px; box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    .self-input input {
+      border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px;
+      font-size: 14px; font-family: inherit; width: 160px;
+    }
+    .self-input input:focus { outline: 2px solid var(--primary); }
+    .gen-btn {
+      border: none; background: var(--primary); color: #fff; font-weight: 700; font-size: 13px;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+      transition: all .15s;
+    }
+    .gen-btn:hover { opacity: .85; transform: translateY(-1px); }
+    .gen-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .stat-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .stat-tag {
+      background: var(--primary-light); color: var(--primary); font-size: 12px;
+      font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+    }
+    .stat-tag.highlight { background: #fef3cd; color: #856404; }
+    .stat-tag.best { background: #d1fae5; color: var(--android); }
+    .info-table {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    .info-table h3 { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+    .info-row { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap; }
+    .info-row>div { min-width: 80px; }
+    .info-row strong { display: block; font-size: 18px; color: var(--text); }
+    .percentile-bar-wrap {
+      height: 14px; background: var(--border); border-radius: 7px; overflow: hidden; margin-top: 8px;
+    }
+    .percentile-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+      border-radius: 7px; transition: width .3s;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .self-input { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">← 返回排行榜</a>
+      <h1>通关时间分布</h1>
+    </div>
+  </div>
+  <div class="container">
+    <div class="controls">
+      <div class="filter-group" id="platGroup">
+        <button class="filter-btn active" data-plat="all">全部</button>
+        <button class="filter-btn" data-plat="PC">PC</button>
+        <button class="filter-btn" data-plat="Android">安卓</button>
+        <button class="filter-btn" data-plat="iOS">iOS</button>
+      </div>
+      <select id="granularity">
+        <option value="auto">自动分桶</option>
+        <option value="10">每10秒</option>
+        <option value="2" selected>每2秒</option>
+        <option value="2">每2秒</option>
+        <option value="1">每1秒</option>
+        <option value="0.5">每0.5秒</option>
+        <option value="0.1">每0.1秒</option>
+      </select>
+      <label class="toggle"><input type="checkbox" id="showContested">含争议成绩(*)</label>
+      <label class="toggle"><input type="checkbox" id="bestOnly" checked>仅每人最佳</label>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+        <span>范围</span>
+        <input type="text" id="minRange" placeholder="最快" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;" title="最小时间，留空=自动取最快">
+        <span>~</span>
+        <input type="text" id="maxRange" value="5m" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;" title="最大时间，如 5m 或 300">
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="chart" width="1200" height="500"></canvas>
+      <div id="chartTooltip" style="display:none;position:absolute;pointer-events:none;background:rgba(31,37,51,.92);color:#fff;font-size:12px;padding:8px 12px;border-radius:8px;white-space:nowrap;z-index:10;line-height:1.6;box-shadow:0 4px 12px rgba(0,0,0,.2);"></div>
+    </div>
+
+    <div class="self-input">
+      <span style="font-weight:700;font-size:13px;white-space:nowrap;">我的通关时间</span>
+      <input type="text" id="myTime" placeholder="如 1m23.456s">
+      <button class="filter-btn active" style="padding:7px 14px;font-size:13px;" onclick="updateChart()">查看位置</button>
+      <div id="myStats" style="font-size:13px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div style="flex:1;"></div>
+      <button class="gen-btn" id="genBtn" onclick="generateImage()">生成长图</button>
+    </div>
+
+    <div class="info-table">
+      <h3>统计数据</h3>
+      <div class="info-row" id="statSummary">
+        <div><strong id="statCount">-</strong>总条数</div>
+        <div><strong id="statBest">-</strong>最快纪录</div>
+        <div><strong id="statAvg">-</strong>平均值</div>
+        <div><strong id="statMedian">-</strong>中位数</div>
+        <div><strong id="statStddev">-</strong>标准差</div>
+      </div>
+      <div class="percentile-bar-wrap" style="margin-top:12px;">
+        <div class="percentile-bar-fill" id="pbar" style="width:50%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px;">
+        <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+      </div>
+      <div id="rangeInfo" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
+    </div>
+
+    <div id="loading" style="text-align:center;padding:60px 0;color:var(--muted);">
+      <div class="spinner" style="margin:0 auto 12px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;width:36px;height:36px;animation:spin .6s linear infinite;"></div>
+      <div>正在加载数据...</div>
+    </div>
+  </div>
+
+  <style>.spinner { border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin .6s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }</style>
+
+  <script>
+    let allTimes = [];           // { seconds, plat, player, time, key, hp }
+    let playerBestMap = new Map();  // key -> best seconds
+    let currentPlat = 'all';
+    let currentGranularity = 2;
+    let showContested = false;
+    let bestOnly = true;
+    let myTimeSec = null;
+    let minRangeSec = null;   // null = auto (fastest in filtered set)
+    let maxRangeSec = 300;    // default 5 minutes
+
+    function parseTimePlay(tp) {
+      if (!tp) return 0;
+      let s = tp.replace(/\*/g, '');
+      let hasQ = s.includes('?');
+      s = s.replace(/\?/g, '9');
+      let h = 0, m = 0, sec = 0;
+      let hm = s.match(/([\d.]+)h/); if (hm) h = parseFloat(hm[1]) || 0;
+      let mm = s.match(/([\d.]+)m/); if (mm) m = parseFloat(mm[1]) || 0;
+      let rs = s.replace(/[\d.]+[hm]/g, '').replace(/s/g, '').trim();
+      if (rs) sec = parseFloat(rs) || 0;
+      let t = h * 3600 + m * 60 + sec;
+      if (hasQ) t = Math.ceil(t);
+      return t;
+    }
+
+    function playerKey(item) {
+      const name = (item.player || '').toLowerCase().trim();
+      const hp = (item.homepage || '').toLowerCase().trim();
+      if (!hp || hp === '*') return name;
+      const first = hp.split(/\n/).map(l => l.trim()).find(l => l && l !== '*') || '';
+      return first ? name + '|' + first : name;
+    }
+
+    function flattenGrouped(data) {
+      if (!Array.isArray(data) || data.length === 0) return [];
+      if (data[0].records) {
+        const flat = [];
+        data.forEach(g => {
+          (g.records || []).forEach(r => {
+            flat.push({ player: g.player, homepage: g.homepage, time: r.time, platform: r.platform, date: r.date });
+          });
+        });
+        return flat;
+      }
+      return data;
+    }
+
+    function loadData() {
+      return fetch('data.json').then(r => r.json()).then(data => {
+        const flat = flattenGrouped(data);
+        playerBestMap.clear();
+        allTimes = flat
+          .filter(d => d.time && d.platform)
+          .map(d => {
+            const sec = parseTimePlay(d.time);
+            if (sec <= 0 || isNaN(sec)) return null;
+            const key = playerKey(d);
+            const obj = { seconds: sec, plat: d.platform, player: d.player, time: d.time, key, hp: d.homepage };
+            const prev = playerBestMap.get(key);
+            if (prev === undefined || sec < prev) playerBestMap.set(key, sec);
+            return obj;
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.seconds - b.seconds);
+      });
+    }
+
+    function stats(arr) {
+      if (!arr.length) return { count: 0 };
+      arr = arr.slice().sort((a, b) => a - b);
+      const n = arr.length;
+      const sum = arr.reduce((a, b) => a + b, 0);
+      const mean = sum / n;
+      const median = n % 2 === 1 ? arr[(n - 1) / 2] : (arr[n / 2 - 1] + arr[n / 2]) / 2;
+      const variance = arr.reduce((s, x) => s + (x - mean) ** 2, 0) / n;
+      return { count: n, min: arr[0], max: arr[n - 1], mean, median, stddev: Math.sqrt(variance) };
+    }
+
+    function percentile(arr, pct, value) {
+      if (!arr.length) return 0;
+      let below = 0;
+      for (let i = 0; i < arr.length; i++) if (arr[i] <= value) below++;
+      return (below / arr.length * 100);
+    }
+
+    function formatSeconds(sec) {
+      if (sec < 60) return sec.toFixed(3) + 's';
+      const m = Math.floor(sec / 60);
+      const s = sec - m * 60;
+      return m + 'm' + s.toFixed(3).padStart(6, '0') + 's';
+    }
+
+    function formatSecondsMinOnly(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.round(sec - m * 60);
+      if (sec < 60) return s + 's';
+      if (s === 0) return m + 'm';
+      return m + 'm' + s + 's';
+    }
+
+    function getFilteredTimes() {
+      let result = bestOnly
+        ? allTimes.filter(t => playerBestMap.get(t.key) === t.seconds)
+        : [...allTimes];
+      if (!showContested) result = result.filter(t => !t.time.includes('*'));
+      if (currentPlat !== 'all') {
+        if (currentPlat === 'Mobile') result = result.filter(t => t.plat === 'Android' || t.plat === 'iOS');
+        else result = result.filter(t => t.plat === currentPlat);
+      }
+      result.sort((a, b) => a.seconds - b.seconds);
+
+      if (result.length) {
+        const lo = minRangeSec != null ? minRangeSec : result[0].seconds;
+        const hi = maxRangeSec != null ? maxRangeSec : result[result.length - 1].seconds;
+        result = result.filter(t => t.seconds >= lo && t.seconds <= hi);
+      }
+      return result;
+    }
+
+    function drawChart(times) {
+      const canvas = document.getElementById('chart');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const W = rect.width;
+      const H = Math.max(400, Math.min(600, window.innerHeight * 0.55));
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const pad = { top: 28, right: 24, bottom: 52, left: 52 };
+      const cw = W - pad.left - pad.right;
+      const ch = H - pad.top - pad.bottom;
+
+      if (!times.length) {
+        ctx.fillStyle = '#8a93a8';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无数据', W / 2, H / 2);
+        return;
+      }
+
+      const vals = times.map(t => t.seconds);
+      const minVal = vals[0];
+      const maxVal = vals[vals.length - 1];
+      const range = maxVal - minVal || 1;
+      let binW;
+      if (currentGranularity === 'auto') {
+        const nBins = Math.max(15, Math.min(80, Math.floor(Math.sqrt(vals.length) * 1.5)));
+        binW = range / nBins;
+      } else {
+        binW = currentGranularity;
+      }
+
+      const binStart = Math.floor(minVal / binW) * binW;
+      const binCount = Math.ceil((maxVal - binStart) / binW) + 1;
+
+      const platOrder = ['PC', 'Android', 'iOS'];
+      const platColor = { PC: '#5b6cff', Android: '#10b981', iOS: '#6b7280' };
+      const platLabel = { PC: 'PC', Android: '安卓', iOS: 'iOS' };
+      const platStackData = new Array(binCount);
+      for (let i = 0; i < binCount; i++) platStackData[i] = { PC: 0, Android: 0, iOS: 0 };
+      for (const t of times) {
+        const idx = Math.floor((t.seconds - binStart) / binW);
+        if (idx >= 0 && idx < binCount) platStackData[idx][t.plat] = (platStackData[idx][t.plat] || 0) + 1;
+      }
+      const maxH = Math.max(1, ...platStackData.map(d => d.PC + d.Android + d.iOS));
+
+      ctx.clearRect(0, 0, W, H);
+
+      // background
+      ctx.fillStyle = '#fafbfd';
+      ctx.fillRect(pad.left, pad.top, cw, ch);
+
+      // grid lines
+      const ySteps = 5;
+      for (let i = 0; i <= ySteps; i++) {
+        const y = pad.top + ch - (ch / ySteps) * i;
+        ctx.strokeStyle = i === 0 ? '#d0d5de' : '#e8eaf1';
+        ctx.lineWidth = i === 0 ? 1 : 0.5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+        ctx.fillStyle = '#8a93a8';
+        ctx.font = '10px -apple-system,sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.round(maxH / ySteps * i), pad.left - 8, y + 4);
+      }
+      // axis line
+      ctx.strokeStyle = '#c0c5d0';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top + ch); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad.left, pad.top + ch); ctx.lineTo(W - pad.right, pad.top + ch); ctx.stroke();
+
+      // bars
+      const barGap = cw / binCount;
+      const barW = Math.max(3, barGap * 0.8);
+      const radius = Math.min(3, barW / 2);
+      const barBounds = []; // { x, w, i } for tooltip hit-test
+      for (let i = 0; i < binCount; i++) {
+        const x = pad.left + i * barGap + (barGap - barW) / 2;
+        const yBase = pad.top + ch;
+        let yOff = 0;
+        for (const plat of platOrder) {
+          const cnt = platStackData[i][plat];
+          if (!cnt) continue;
+          const barH = Math.max(1, (cnt / maxH) * ch);
+          const y = yBase - yOff - barH;
+          ctx.fillStyle = platColor[plat];
+          roundedRect(ctx, x, y, barW, barH, radius, platOrder.indexOf(plat) === 0, true);
+          if (platOrder.indexOf(plat) < 2 && platStackData[i][platOrder[platOrder.indexOf(plat) + 1]]) {
+            ctx.fillStyle = 'rgba(255,255,255,.25)';
+            ctx.fillRect(x, y + barH - 1, barW, 1);
+          }
+          yOff += barH;
+        }
+        barBounds.push({ x, w: barW, i, yTop: yBase - yOff, yBase });
+      }
+
+      // X axis labels - compute nice ticks
+      function niceStep(range, maxTicks) {
+        const rough = range / maxTicks;
+        const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+        const scaled = rough / mag;
+        let step;
+        if (scaled <= 1.5) step = 1;
+        else if (scaled <= 3) step = 2;
+        else if (scaled <= 7.5) step = 5;
+        else step = 10;
+        return step * mag;
+      }
+      const xTickStep = niceStep(range, 10);
+      const firstTick = Math.ceil(minVal / xTickStep) * xTickStep;
+
+      ctx.fillStyle = '#5a6072';
+      ctx.font = '10px -apple-system,sans-serif';
+      ctx.textAlign = 'center';
+      for (let tick = firstTick; tick <= maxVal + binW; tick += xTickStep) {
+        const x = pad.left + ((tick - binStart) / (binCount * binW)) * cw;
+        if (x < pad.left - 20 || x > W - pad.right + 20) continue;
+        const s = xTickStep >= 60 ? formatSecondsMinOnly(tick) : formatSeconds(tick);
+        ctx.fillText(s, x, pad.top + ch + 18);
+      }
+      ctx.fillStyle = '#8a93a8';
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.fillText('通关时间', pad.left + cw / 2, pad.top + ch + 38);
+
+      // Y axis title
+      ctx.save();
+      ctx.fillStyle = '#8a93a8';
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.translate(16, pad.top + ch / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('纪录条数', 0, 0);
+      ctx.restore();
+
+      // my time marker
+      if (myTimeSec !== null && myTimeSec >= minVal && myTimeSec <= maxVal + binW) {
+        const mx = pad.left + ((myTimeSec - binStart) / (binCount * binW)) * cw;
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 3]);
+        ctx.beginPath(); ctx.moveTo(mx, pad.top); ctx.lineTo(mx, pad.top + ch); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 11px -apple-system,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('▼', mx, pad.top - 4);
+        ctx.fillText('我 ' + formatSeconds(myTimeSec), mx, pad.top - 16);
+      }
+
+      // legend
+      const lx = pad.left + cw - 140, ly = pad.top + 6;
+      platOrder.forEach((p, i) => {
+        const py = ly + i * 18;
+        ctx.fillStyle = platColor[p];
+        ctx.beginPath(); ctx.arc(lx + 4, py + 5, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1f2533';
+        ctx.font = '11px -apple-system,sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(platLabel[p], lx + 14, py + 9);
+      });
+
+      // grid border
+      ctx.strokeStyle = '#d0d5de';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(pad.left, pad.top, cw, ch);
+
+      // store for tooltip
+      canvas._tip = { barBounds, platStackData, platLabel, platOrder, binStart, binW, pad };
+    }
+
+    function roundedRect(ctx, x, y, w, h, r, topOnly, bottomOnly) {
+      r = Math.min(r, w / 2, h);
+      ctx.beginPath();
+      if (topOnly) {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h);
+        ctx.lineTo(x, y + h);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+      } else {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function updateChart() {
+      const raw = document.getElementById('myTime').value.trim();
+      if (raw) {
+        const s = parseTimePlay(raw);
+        myTimeSec = (!isNaN(s) && s > 0) ? s : null;
+      } else {
+        myTimeSec = null;
+      }
+
+      const minRaw = document.getElementById('minRange').value.trim();
+      const maxRaw = document.getElementById('maxRange').value.trim();
+      if (minRaw) {
+        const s = parseTimePlay(minRaw);
+        minRangeSec = (!isNaN(s) && s >= 0) ? s : null;
+      } else {
+        minRangeSec = null;
+      }
+      if (maxRaw) {
+        const s = parseTimePlay(maxRaw);
+        maxRangeSec = (!isNaN(s) && s >= 0) ? s : null;
+      } else {
+        maxRangeSec = null;
+      }
+
+      const times = getFilteredTimes();
+      const vals = times.map(t => t.seconds);
+      const st = stats(vals);
+
+      // Compute total count before range clipping for the rangeInfo
+      let totalBeforeRange = 0;
+      {
+        let all = bestOnly ? allTimes.filter(t => playerBestMap.get(t.key) === t.seconds) : [...allTimes];
+        if (!showContested) all = all.filter(t => !t.time.includes('*'));
+        if (currentPlat !== 'all') {
+          if (currentPlat === 'Mobile') all = all.filter(t => t.plat === 'Android' || t.plat === 'iOS');
+          else all = all.filter(t => t.plat === currentPlat);
+        }
+        totalBeforeRange = all.length;
+      }
+      const rangeInfo = document.getElementById('rangeInfo');
+      if (totalBeforeRange > st.count) {
+        rangeInfo.innerHTML = '显示范围 ' + (st.count ? formatSeconds(st.min) : '?') + ' ~ ' + (st.count ? formatSeconds(st.max) : '?') +
+          '，共 ' + st.count + ' 条（已截断 ' + (totalBeforeRange - st.count) + ' 条超出范围）';
+      } else {
+        rangeInfo.innerHTML = '全部 ' + st.count + ' 条纪录';
+      }
+
+      document.getElementById('statCount').textContent = st.count;
+      document.getElementById('statBest').textContent = st.count ? formatSeconds(st.min) : '-';
+      document.getElementById('statAvg').textContent = st.count ? formatSeconds(st.mean) : '-';
+      document.getElementById('statMedian').textContent = st.count ? formatSeconds(st.median) : '-';
+      document.getElementById('statStddev').textContent = st.count ? '±' + formatSeconds(st.stddev) : '-';
+
+      // percentile bar
+      const pct = st.count ? ((st.median - st.min) / (st.max - st.min) * 100) : 50;
+      document.getElementById('pbar').style.width = pct + '%';
+
+      // my stats
+      const myDiv = document.getElementById('myStats');
+      if (myTimeSec !== null && st.count) {
+        const p = percentile(vals, null, myTimeSec);
+        const rank = vals.indexOf(myTimeSec) >= 0 ? vals.indexOf(myTimeSec) + 1 : vals.findIndex(v => v >= myTimeSec) + 1;
+        myDiv.innerHTML = '<span class="stat-tag highlight">超越 ' + p.toFixed(1) + '% 的纪录</span>' +
+          '<span class="stat-tag">约第 ' + (rank > 0 ? rank : '?') + ' 名</span>' +
+          '<span class="stat-tag">时间 ' + formatSeconds(myTimeSec) + '</span>';
+      } else if (raw) {
+        myDiv.innerHTML = '<span style="color:var(--muted);">无法解析时间格式</span>';
+      } else {
+        myDiv.innerHTML = '';
+      }
+
+      drawChart(times);
+    }
+
+    document.querySelectorAll('#platGroup .filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#platGroup .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPlat = btn.dataset.plat;
+        updateChart();
+      });
+    });
+
+    document.getElementById('granularity').addEventListener('change', e => {
+      const v = e.target.value;
+      currentGranularity = v === 'auto' ? 'auto' : parseFloat(v);
+      updateChart();
+    });
+
+    document.getElementById('showContested').addEventListener('change', e => {
+      showContested = e.target.checked;
+      updateChart();
+    });
+
+    document.getElementById('bestOnly').addEventListener('change', e => {
+      bestOnly = e.target.checked;
+      updateChart();
+    });
+
+    // chart tooltip
+    const chartCanvas = document.getElementById('chart');
+    const tooltip = document.getElementById('chartTooltip');
+    chartCanvas.addEventListener('mousemove', e => {
+      const tip = chartCanvas._tip;
+      if (!tip) { tooltip.style.display = 'none'; return; }
+      const cRect = chartCanvas.getBoundingClientRect();
+      const mx = e.clientX - cRect.left;
+      const my = e.clientY - cRect.top;
+      let found = null;
+      for (const b of tip.barBounds) {
+        if (mx >= b.x && mx <= b.x + b.w && my >= b.yTop - 4 && my <= b.yBase + 4) {
+          found = b; break;
+        }
+      }
+      if (!found) { tooltip.style.display = 'none'; return; }
+      const d = tip.platStackData[found.i];
+      const tLo = formatSeconds(tip.binStart + found.i * tip.binW);
+      const tHi = formatSeconds(tip.binStart + (found.i + 1) * tip.binW);
+      let html = '<b>' + (d.PC + d.Android + d.iOS) + '条</b> ' + tLo + ' ~ ' + tHi + '<br>';
+      let parts = [];
+      tip.platOrder.forEach(p => { if (d[p]) parts.push(tip.platLabel[p] + ': ' + d[p]); });
+      html += parts.join('  ');
+      tooltip.innerHTML = html;
+      tooltip.style.display = '';
+      // Position near cursor with boundary auto-fit (use fixed estimates since offsetWidth may be 0 right after display change)
+      const wRect = chartCanvas.parentElement.getBoundingClientRect();
+      const cx = cRect.left - wRect.left;
+      const cy = cRect.top - wRect.top;
+      const estW = 200;
+      const estH = 36;
+      let tx = cx + mx + 12;
+      let ty = cy + my - estH - 8;
+      if (tx + estW > wRect.width - 4) tx = cx + mx - estW - 12;
+      if (ty < 0) ty = cy + my + 12;
+      tooltip.style.left = Math.max(0, tx) + 'px';
+      tooltip.style.top = Math.max(0, ty) + 'px';
+    });
+    chartCanvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    document.getElementById('minRange').addEventListener('input', () => updateChart());
+    document.getElementById('maxRange').addEventListener('input', () => updateChart());
+
+    document.getElementById('myTime').addEventListener('input', updateChart);
+
+    window.addEventListener('resize', () => updateChart());
+
+
+
+    // ===== 生成长图 =====
+    let _h2cLoading = false;
+    function loadH2C(cb) {
+      if (window.html2canvas) { cb(); return; }
+      if (_h2cLoading) { setTimeout(() => loadH2C(cb), 200); return; }
+      _h2cLoading = true;
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.onload = () => { _h2cLoading = false; cb(); };
+      s.onerror = () => { _h2cLoading = false; alert('无法加载图片生成库，请检查网络'); };
+      document.head.appendChild(s);
+    }
+
+    function generateImage() {
+      const btn = document.getElementById('genBtn');
+      if (btn.disabled) return;
+      loadH2C(() => {
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;';
+        const title = document.createElement('div');
+        title.style.cssText = 'font-size:20px;font-weight:800;color:#1f2533;';
+        title.textContent = '通关时间分布 · CGOI';
+        wrap.appendChild(title);
+
+        const canvasSrc = document.getElementById('chart');
+        const img = document.createElement('img');
+        img.src = canvasSrc.toDataURL('image/png');
+        img.style.cssText = 'width:100%;max-width:1100px;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
+        wrap.appendChild(img);
+
+        const infoEl = document.querySelector('.info-table');
+        if (infoEl) {
+          const clone = infoEl.cloneNode(true);
+          clone.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;max-width:1100px;';
+          wrap.appendChild(clone);
+        }
+
+        document.body.appendChild(wrap);
+        html2canvas(wrap, { backgroundColor: '#f5f6fb', scale: 2, useCORS: true, logging: false }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'CGOI_distribution_' + new Date().toISOString().slice(0,10) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          document.body.removeChild(wrap);
+          btn.disabled = false;
+          btn.textContent = '生成长图';
+        }).catch(err => {
+          document.body.removeChild(wrap);
+          btn.disabled = false;
+          btn.textContent = '生成长图';
+          alert('生成失败：' + err.message);
+        });
+      });
+    }
+
+    loadData().then(() => {
+      document.getElementById('loading').style.display = 'none';
+      updateChart();
+    });
+  </script>
+</body>
+</html>
