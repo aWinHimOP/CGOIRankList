@@ -1099,7 +1099,6 @@
       const hp = record.homepage || (old && old.homepage) || '';
       const hpNorm = s => (s || '').toLowerCase().replace(/\/+$/, '').trim();
       const matchHp = hpNorm(hp);
-      if (!matchHp && !old) return;
       const changedPlayer = !old || record.player !== old.player;
       const changedAlias = !old || record.alias !== old.alias;
       const doSync = (arr) => {
