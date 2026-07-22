@@ -2669,35 +2669,56 @@
         "platform": "PC",
         "date": "2025-7-21 11:41",
         "source": "https://www.bilibili.com/video/BV1RtgizKEMn",
-        "alias": "D-得，得的B站账号"
+        "alias": "D-得、得的B站账号"
       },
       {
         "time": "1m08.686s",
         "platform": "PC",
         "date": "2024-2-9 22:51",
         "source": "https://www.bilibili.com/video/BV1Cu4m1K7Jy",
-        "alias": "D-得，得的B站账号"
+        "alias": "D-得、得的B站账号"
       },
       {
         "time": "1m06.676s",
         "platform": "PC",
         "date": "2024-2-15 14:32",
         "source": "https://www.bilibili.com/video/BV1RK421k7ec",
-        "alias": "D-得，得的B站账号"
+        "alias": "D-得、得的B站账号"
+      },
+      {
+        "time": "1m52.737s",
+        "platform": "PC",
+        "date": "2021-8-6 11:46",
+        "source": "https://www.bilibili.com/video/BV1G54y1E7Vh",
+        "alias": "D-得、得的B站账号"
+      },
+      {
+        "time": "1m42.819s",
+        "platform": "PC",
+        "date": "2021-8-8 17:48",
+        "source": "https://www.bilibili.com/video/BV1kb4y1z7FY",
+        "alias": "D-得、得的B站账号"
+      },
+      {
+        "time": "1m57.191s",
+        "platform": "PC",
+        "date": "2021-8-9 19:54",
+        "source": "https://www.bilibili.com/video/BV1qU4y1J7ap",
+        "alias": "D-得、得的B站账号"
       },
       {
         "time": "1m05.945s",
         "platform": "iOS",
         "date": "2025-6-7 19:06",
         "source": "https://www.bilibili.com/video/BV1N5TyzTEqA",
-        "alias": "D-得，得的B站账号"
+        "alias": "D-得、得的B站账号"
       },
       {
         "time": "1m33.704s",
         "platform": "iOS",
         "date": "2021-7-31 21:46",
         "source": "https://www.bilibili.com/video/BV1Av411K76p",
-        "alias": "D-得，得的B站账号"
+        "alias": "D-得、得的B站账号"
       }
     ]
   },
@@ -5750,6 +5771,12 @@
         "platform": "Android",
         "date": "2026-7-16 23:38",
         "source": "https://www.bilibili.com/video/BV1XBKV6LEfm"
+      },
+      {
+        "time": "2m01.068s",
+        "platform": "Android",
+        "date": "2026-7-21 00:24",
+        "source": "https://www.bilibili.com/video/BV1YzKs65EQW"
       }
     ]
   },
@@ -6070,6 +6097,13 @@
         "platform": "PC",
         "date": "2026-7-16 10:00",
         "source": "https://www.bilibili.com/video/BV1qkKM6MEuE",
+        "alias": "Ra瑞ty，Little_Rarity"
+      },
+      {
+        "time": "2m09.967s",
+        "platform": "PC",
+        "date": "2026-07-20 19:03",
+        "source": "https://www.bilibili.com/video/BV1bmKp6cEux",
         "alias": "Ra瑞ty，Little_Rarity"
       },
       {
@@ -9000,6 +9034,42 @@
         "date": "2017-11-23",
         "source": "https://www.bilibili.com/video/BV1GJ411p7aq",
         "alias": "White55开解说"
+      }
+    ]
+  },
+  {
+    "player": "livb20877655946",
+    "homepage": "https://space.bilibili.com/3690989835258305",
+    "records": [
+      {
+        "time": "4m30.065s",
+        "platform": "PC",
+        "date": "2026-7-21 22:23",
+        "source": "https://www.bilibili.com/video/BV1kiKY6EEht"
+      }
+    ]
+  },
+  {
+    "player": "爱琳野",
+    "homepage": "https://space.bilibili.com/5093346",
+    "records": [
+      {
+        "time": "07h08m26.260s",
+        "platform": "PC",
+        "date": "2026-07-22 00:53",
+        "source": "https://www.bilibili.com/video/BV1xUKa6HEC4"
+      }
+    ]
+  },
+  {
+    "player": "左酸zdna",
+    "homepage": "https://space.bilibili.com/168193885",
+    "records": [
+      {
+        "time": "04h28m19.887s",
+        "platform": "PC",
+        "date": "2026-07-20 17:43",
+        "source": "https://www.bilibili.com/video/BV1XyKm6uEHe"
       }
     ]
   }
