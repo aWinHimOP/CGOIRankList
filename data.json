@@ -2421,6 +2421,13 @@
         "date": "2025-9-20 19:13",
         "source": "https://www.bilibili.com/opus/1063135015717568564",
         "alias": "憨批岛、hhd-憨憨岛、hanpidao、fnnzgnhhd"
+      },
+      {
+        "time": "1m17.828s",
+        "platform": "Android",
+        "date": "2026-7-20 21:32",
+        "source": "https://www.bilibili.com/opus/1063135015717568564",
+        "alias": "憨批岛、hhd-憨憨岛、hanpidao、fnnzgnhhd"
       }
     ]
   },
@@ -5674,6 +5681,13 @@
         "date": "2026-1-3 12:08",
         "source": "Modpack群",
         "alias": "皮铭亮ESI，牛M牢大"
+      },
+      {
+        "time": "1m49.670s",
+        "platform": "Android",
+        "date": "2026-7-27 21:27",
+        "source": "https://www.bilibili.com/video/BV1Ua3w6EE19",
+        "alias": "皮铭亮ESI，牛M牢大"
       }
     ]
   },
@@ -5777,6 +5791,12 @@
         "platform": "Android",
         "date": "2026-7-21 00:24",
         "source": "https://www.bilibili.com/video/BV1YzKs65EQW"
+      },
+      {
+        "time": "1m53.759s",
+        "platform": "Android",
+        "date": "2026-8-5 03:48",
+        "source": "https://www.bilibili.com/video/BV1qjM66AE6j"
       }
     ]
   },
@@ -7307,6 +7327,12 @@
         "time": "3m27.24?s",
         "platform": "iOS",
         "date": "2026-07-04"
+      },
+      {
+        "time": "3m11.914s",
+        "platform": "iOS",
+        "date": "2026-8-3",
+        "source": "https://www.bilibili.com/video/BV1oUGP6uE3f 视频评论"
       }
     ]
   },
@@ -9070,6 +9096,30 @@
         "platform": "PC",
         "date": "2026-07-20 17:43",
         "source": "https://www.bilibili.com/video/BV1XyKm6uEHe"
+      }
+    ]
+  },
+  {
+    "player": "CassiusKK",
+    "homepage": "https://space.bilibili.com/1413029119",
+    "records": [
+      {
+        "time": "1m22.400s",
+        "platform": "PC",
+        "date": "2026-8-6 17:25",
+        "source": "https://www.bilibili.com/video/BV1x3un6ZEM9"
+      }
+    ]
+  },
+  {
+    "player": "小左最可爱xzzka",
+    "homepage": "https://space.bilibili.com/3537114274728157",
+    "records": [
+      {
+        "time": "3m15.135s",
+        "platform": "Android",
+        "date": "2026-8-5",
+        "source": "https://www.bilibili.com/video/BV1oUGP6uE3f 视频评论"
       }
     ]
   }
