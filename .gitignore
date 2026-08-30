@@ -1,6 +1,26 @@
+# ===== 系统与临时文件 =====
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
 Thumbs.db
+desktop.ini
 node_modules/
+
+# ===== 管理后台（仅本地使用，不上传 GitHub）=====
+admin.html
+
+# ===== 本地服务器与启动脚本（不上传）=====
+proxy_server.py
+serve.bat
+serve.ps1
+
+# ===== AI 配置（含 API Key，绝不上传）=====
+ai_config.json
+
+# ===== 自动备份目录 =====
+backups/
+
+# ===== 本地开发杂项 =====
+*.log
+*.tmp
