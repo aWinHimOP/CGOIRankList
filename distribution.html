@@ -142,6 +142,38 @@
       height: 100%; background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
       border-radius: 7px; transition: width .3s;
     }
+    .analysis-wrap {
+      margin-top: 20px;
+    }
+    .tier-row {
+      position:relative; margin:8px 0; padding:10px 14px;
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      overflow:hidden;
+    }
+    .tier-row-first .tier-bg { background:linear-gradient(90deg, rgba(217,119,6,.10), rgba(217,119,6,0)); }
+    .tier-bg {
+      position:absolute; inset:0; opacity:.55; pointer-events:none;
+    }
+    .tier-body { position:relative; z-index:1; display:flex; align-items:center; gap:16px; }
+    .tier-info { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
+    .tier-line1 { display:flex; align-items:center; gap:8px; }
+    .tier-line2 { display:flex; align-items:baseline; gap:10px; }
+    .tier-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 9px; border-radius:8px; white-space:nowrap;
+      font-weight:800; font-size:11.5px;
+      box-shadow:0 1px 2px rgba(20,30,60,.08);
+    }
+    .tier-desc { font-size:11px; color:var(--muted); white-space:nowrap; }
+    .tier-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:2px; }
+    .tier-range { font-weight:700; font-size:12.5px; color:#3c4356; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .tier-count { color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .tier-count b { color:#1f2533; font-size:13px; }
+    .tier-bar {
+      flex-shrink:0; display:block; width:34%; height:12px;
+      background:var(--border); border-radius:6px; overflow:hidden;
+    }
+    .tier-pct-fill { display:block; height:100%; border-radius:6px; transition:width .45s cubic-bezier(.22,.9,.35,1); }
     @media (max-width: 600px) {
       .container { padding: 12px; }
       .controls { flex-direction: column; align-items: stretch; }
@@ -153,7 +185,6 @@
   <div class="header">
     <div class="header-inner">
       <div>
-        <a class="back-link" href="index.html">← 返回排行榜</a>
         <h1>通关时间分布</h1>
       </div>
       <div class="nav-menu">
@@ -193,6 +224,8 @@
         <span>~</span>
         <input type="text" id="maxRange" value="5m" style="width:60px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;" title="最大时间，如 5m 或 300">
       </div>
+      <div style="flex:1;"></div>
+      <button class="gen-btn" id="genBtn" onclick="generateImage()">生成长图</button>
     </div>
 
     <div class="chart-wrap">
@@ -205,8 +238,6 @@
       <input type="text" id="myTime" placeholder="如 1m23.456s">
       <button class="filter-btn active" style="padding:7px 14px;font-size:13px;" onclick="updateChart()">查看位置</button>
       <div id="myStats" style="font-size:13px;display:flex;gap:8px;flex-wrap:wrap;"></div>
-      <div style="flex:1;"></div>
-      <button class="gen-btn" id="genBtn" onclick="generateImage()">生成长图</button>
     </div>
 
     <div class="info-table">
@@ -230,6 +261,39 @@
     <div id="loading" style="text-align:center;padding:60px 0;color:var(--muted);">
       <div class="spinner" style="margin:0 auto 12px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;width:36px;height:36px;animation:spin .6s linear infinite;"></div>
       <div>正在加载数据...</div>
+    </div>
+
+    <!-- ===== 深度趋势分析 ===== -->
+    <div class="analysis-wrap" id="analysisWrap" style="display:none;">
+      <h2 style="margin:0 0 4px;font-size:17px;font-weight:800;">整体趋势分析</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">基于筛选后数据自动生成的洞察 · 更换筛选条件后自动重新计算</div>
+
+      <!-- 年度水平趋势（每年分布：最快/中位/平均/四分位） -->
+      <div class="info-table" style="margin-bottom:12px;">
+        <h3 style="font-size:14px;">历年水平演进 <span id="yearTrendBasis" style="font-weight:400;font-size:11px;"></span></h3>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.7;">X 轴是年份，Y 轴是通关时间 —— <b style="color:#ef4444;">越低 = 越快 = 越好</b>，注意<b>折线往下走才是变快</b></div>
+        <div style="position:relative;">
+          <canvas id="yearTrendChart" width="1100" height="300" style="width:100%;cursor:crosshair;"></canvas>
+          <div id="ytTip" style="display:none;position:absolute;pointer-events:none;background:rgba(31,37,51,.94);color:#fff;font-size:12px;padding:8px 12px;border-radius:8px;white-space:nowrap;z-index:10;line-height:1.7;box-shadow:0 4px 12px rgba(0,0,0,.25);"></div>
+        </div>
+        <div id="yearTrendNote" style="font-size:11px;color:var(--muted);margin-top:6px;"></div>
+        <div id="yearDataTable" style="margin-top:10px;overflow-x:auto;"></div>
+      </div>
+      <div id="nnPredictBox"></div>
+
+      <!-- 分数段结构 + 分析洞察文字 -->
+      <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+        <div class="info-table" style="margin:0;">
+          <h3 style="font-size:14px;">纪录水平分层</h3>
+          <div id="tierTable" style="font-size:12px;"></div>
+        </div>
+        <div class="info-table" style="margin:0;">
+          <h3 style="font-size:14px;">自动洞察</h3>
+          <ul id="insightList" style="margin:0;padding-left:18px;font-size:12px;line-height:1.9;color:#3c4356;">
+            <li style="color:var(--muted);">暂无</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -301,7 +365,7 @@
             const sec = parseTimePlay(d.time);
             if (sec <= 0 || isNaN(sec)) return null;
             const key = playerKey(d);
-            const obj = { seconds: sec, plat: d.platform, player: d.player, time: d.time, key, hp: d.homepage };
+            const obj = { seconds: sec, plat: d.platform, player: d.player, time: d.time, key, hp: d.homepage, date: d.date };
             const prev = playerBestMap.get(key);
             if (prev === undefined || sec < prev) playerBestMap.set(key, sec);
             return obj;
@@ -330,18 +394,20 @@
     }
 
     function formatSeconds(sec) {
+      if (sec == null || isNaN(sec)) return '-';
       if (sec < 60) return sec.toFixed(3) + 's';
       const m = Math.floor(sec / 60);
       const s = sec - m * 60;
       return m + 'm' + s.toFixed(3).padStart(6, '0') + 's';
     }
 
+    // 短格式：XmXXs（不足60s = XX.Xs）；表格/区间/轴标签统一用它
     function formatSecondsMinOnly(sec) {
+      if (sec == null || isNaN(sec)) return '-';
       const m = Math.floor(sec / 60);
       const s = Math.round(sec - m * 60);
-      if (sec < 60) return s + 's';
-      if (s === 0) return m + 'm';
-      return m + 'm' + s + 's';
+      if (m === 0) return Math.round(s) + 's';
+      return m + 'm' + String(Math.round(s)).padStart(2, '0') + 's';
     }
 
     function getFilteredTimes() {
@@ -731,24 +797,51 @@
         btn.disabled = true;
         btn.textContent = '生成中...';
         const wrap = document.createElement('div');
-        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;';
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:1140px;';
         const title = document.createElement('div');
         title.style.cssText = 'font-size:20px;font-weight:800;color:#1f2533;';
         title.textContent = '通关时间分布 · CGOI';
         wrap.appendChild(title);
 
+        // —— 1. 主分布图（canvas → img）——
         const canvasSrc = document.getElementById('chart');
         const img = document.createElement('img');
         img.src = canvasSrc.toDataURL('image/png');
-        img.style.cssText = 'width:100%;max-width:1100px;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
+        img.style.cssText = 'width:100%;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
         wrap.appendChild(img);
 
-        const infoEl = document.querySelector('.info-table');
-        if (infoEl) {
-          const clone = infoEl.cloneNode(true);
-          clone.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;max-width:1100px;';
-          wrap.appendChild(clone);
+        // —— 2. 统计数据卡片 ——
+        const statEl = document.querySelector('.container .info-table');
+        if (statEl) {
+          const c1 = statEl.cloneNode(true);
+          c1.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;';
+          wrap.appendChild(c1);
         }
+
+        // —— 3. 整体趋势分析块（历年演进 canvas 转图片 + 分层 + 洞察）——
+        const analysisEl = document.getElementById('analysisWrap');
+        if (analysisEl && analysisEl.style.display !== 'none') {
+          const c2 = analysisEl.cloneNode(true);
+          c2.style.cssText = 'display:block;';
+          // 把内部两个 canvas 换成 img（html2canvas 对 clone 里的 live canvas 绘制不可靠）
+          const srcYear = document.getElementById('yearTrendChart');
+          const dstYear = c2.querySelector('#yearTrendChart');
+          if (srcYear && dstYear) {
+            const yimg = document.createElement('img');
+            yimg.src = srcYear.toDataURL('image/png');
+            yimg.style.cssText = 'width:100%;display:block;';
+            dstYear.replaceWith(yimg);
+          }
+          // 去掉克隆里的 id，避免与页面内重复
+          c2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          wrap.appendChild(c2);
+        }
+
+        // —— 4. 底部水印行 ——
+        const foot = document.createElement('div');
+        foot.style.cssText = 'font-size:10px;color:#8a93a8;text-align:center;';
+        foot.textContent = '生成于 ' + new Date().toLocaleString('zh-CN') + ' · localhost:8080';
+        wrap.appendChild(foot);
 
         document.body.appendChild(wrap);
         html2canvas(wrap, { backgroundColor: '#f5f6fb', scale: 2, useCORS: true, logging: false }).then(canvas => {
@@ -768,6 +861,497 @@
       });
     }
 
+    // ==================== 深度趋势分析 ====================
+    function yearOf(dateStr) {
+      if (!dateStr) return null;
+      const m = String(dateStr).match(/(20\d{2}|19\d{2})/);
+      return m ? parseInt(m[1]) : null;
+    }
+
+    function quantileSorted(sorted, q) {
+      if (!sorted.length) return 0;
+      const pos = (sorted.length - 1) * q;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+      return base + 1 < sorted.length ? sorted[base] + rest * (sorted[base + 1] - sorted[base]) : sorted[base];
+    }
+
+    function analyzeTrends(times) {
+      const byYear = new Map();
+      times.forEach(t => {
+        const y = yearOf(t.date);
+        if (!y) return;
+        if (!byYear.has(y)) byYear.set(y, []);
+        byYear.get(y).push(t);
+      });
+      const out = new Map();
+      byYear.forEach((arr, y) => {
+        let use = arr;
+        if (bestOnly) {
+          const best = new Map();
+          arr.forEach(t => {
+            const prev = best.get(t.key);
+            if (prev === undefined || t.seconds < prev.seconds) best.set(t.key, t);
+          });
+          use = Array.from(best.values());
+        }
+        use.sort((a, b) => a.seconds - b.seconds);
+        out.set(y, use);
+      });
+      return out;
+    }
+
+    function drawYearTrend(yearMap) {
+      const canvas = document.getElementById('yearTrendChart');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const W = Math.max(320, rect.width - 36);
+      const H = 300;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, W, H);
+
+      const years = Array.from(yearMap.keys()).sort((a, b) => a - b).filter(y => yearMap.get(y).length >= 3);
+      const noteEl = document.getElementById('yearTrendNote');
+      if (years.length < 2) {
+        ctx.fillStyle = '#8a93a8'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('样本年份不足（每年至少3条有效纪录），无法绘制趋势', W / 2, H / 2);
+        noteEl.textContent = '';
+        return;
+      }
+
+      const pad = { top: 16, right: 46, bottom: 34, left: 58 };
+      const cw = W - pad.left - pad.right;
+      const ch = H - pad.top - pad.bottom;
+
+      const series = years.map(y => {
+        const arr = yearMap.get(y).map(t => t.seconds);
+        const sorted = arr.slice().sort((a, b) => a - b);
+        const n = sorted.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / n;
+        return { year: y, n: n, min: sorted[0], q1: quantileSorted(sorted, 0.25), median: quantileSorted(sorted, 0.5), q3: quantileSorted(sorted, 0.75), mean: mean };
+      });
+
+      // 先算 NN 预测（这样 Y 轴能容纳预测区间，图也能画预测段）
+      let fcst = null;
+      try { fcst = nnForecast(series, years); } catch (e) { }
+      window.__ytForecast = fcst;
+
+      // Y 范围必须容纳所有元素：当年最快点(min)、四分位带(q1~q3)、预测区间
+      // 下界取 min(所有年最快)*0.95，上界取 max(所有年 q3)*1.08，保证无越界
+      let loBound = Math.min.apply(null, series.map(s => s.min)) * 0.95;
+      let hiBound = Math.max.apply(null, series.map(s => Math.max(s.q3, s.mean))) * 1.08;
+      if (fcst) {
+        loBound = Math.min(loBound, fcst.q1) * 0.97;
+        hiBound = Math.max(hiBound, fcst.q3) * 1.05;
+      }
+      const span = hiBound - loBound || 1;
+
+      ctx.fillStyle = '#fafbfd';
+      ctx.fillRect(pad.left, pad.top, cw, ch);
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + ch - (ch / 4) * i;
+        ctx.strokeStyle = i === 0 ? '#d0d5de' : '#e8eaf1';
+        ctx.lineWidth = i === 0 ? 1 : 0.5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+        ctx.fillStyle = '#8a93a8'; ctx.font = '10px -apple-system,sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(formatSeconds(loBound + span / 4 * i), pad.left - 6, y + 3);
+      }
+
+      // X 轴：有预测时把预测年纳入轴范围（预测点真实展开在图内，而不是贴边）
+      const xEndYear = window.__ytForecast ? window.__ytForecast.nextYear : years[years.length - 1];
+      const xOf = y => pad.left + 12 + ((y - years[0]) / (xEndYear - years[0] || 1)) * (cw - 24 - (window.__ytForecast ? 26 : 0));
+      const yOf = v => pad.top + ch - ((v - loBound) / span) * ch;
+
+      ctx.beginPath();
+      series.forEach((s, i) => { const x = xOf(s.year), y = yOf(s.q3); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      for (let i = series.length - 1; i >= 0; i--) ctx.lineTo(xOf(series[i].year), yOf(series[i].q1));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(91,108,255,.13)';
+      ctx.fill();
+
+      ctx.beginPath();
+      series.forEach((s, i) => { const x = xOf(s.year), y = yOf(s.median); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.strokeStyle = '#5b6cff'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+
+      ctx.beginPath();
+      series.forEach((s, i) => { const x = xOf(s.year), y = yOf(s.mean); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.strokeStyle = 'rgba(245,158,11,.85)'; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+      ctx.stroke(); ctx.setLineDash([]);
+
+      series.forEach(s => {
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath(); ctx.arc(xOf(s.year), yOf(s.min), 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#5b6cff';
+        ctx.beginPath(); ctx.arc(xOf(s.year), yOf(s.median), 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8a93a8'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('n=' + s.n, xOf(s.year), pad.top + ch + 26);
+      });
+
+      ctx.fillStyle = '#5a6072'; ctx.font = '11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      series.forEach(s => ctx.fillText(s.year, xOf(s.year), pad.top + ch + 14));
+      if (window.__ytForecast) {
+        ctx.fillStyle = '#5b6cff99'; ctx.font = 'italic 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(window.__ytForecast.nextYear + '(预测)', xOf(window.__ytForecast.nextYear), pad.top + ch + 14);
+      }
+
+      // —— 神经网络预测段：虚线延长 + 空心点 ——
+      if (window.__ytForecast) {
+        const fc = window.__ytForecast;
+        const lastX = xOf(series[series.length - 1].year);
+        const xPred = xOf(fc.nextYear);
+        // 阴影带延伸（预测区间）
+        ctx.beginPath();
+        ctx.moveTo(xOf(series[series.length - 1].year), yOf(series[series.length - 1].q3));
+        ctx.lineTo(xPred, yOf(fc.q3));
+        ctx.lineTo(xPred, yOf(fc.q1));
+        ctx.lineTo(xOf(series[series.length - 1].year), yOf(series[series.length - 1].q1));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(91,108,255,.05)';
+        ctx.fill();
+        // 中位虚线
+        ctx.beginPath();
+        ctx.moveTo(xOf(series[series.length - 1].year), yOf(series[series.length - 1].median));
+        ctx.lineTo(xPred, yOf(fc.median));
+        ctx.strokeStyle = 'rgba(91,108,255,.55)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+        ctx.stroke(); ctx.setLineDash([]);
+        // 空心预测点 + 标签
+        ctx.beginPath(); ctx.arc(xPred, yOf(fc.median), 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.strokeStyle = '#5b6cff'; ctx.lineWidth = 2.2; ctx.stroke();
+        ctx.fillStyle = '#5b6cff'; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('预测', xPred, yOf(fc.median) - 10);
+      }
+
+      const lx = pad.left + 8, ly = pad.top + 6;
+      [{c:'#5b6cff',t:'中位数',d:false},{c:'rgba(245,158,11,.85)',t:'平均值',d:true},{c:'#10b981',t:'当年最快',d:false}].forEach((it, i) => {
+        const py = ly + i * 15;
+        ctx.strokeStyle = it.c; ctx.lineWidth = 2.5;
+        if (it.d) ctx.setLineDash([4, 3]);
+        ctx.beginPath(); ctx.moveTo(lx, py + 4); ctx.lineTo(lx + 20, py + 4); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#1f2533'; ctx.font = '10px -apple-system,sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(it.t, lx + 26, py + 7);
+      });
+
+      const first = series[0], last = series[series.length - 1];
+      const d = last.median - first.median;
+      const pd = first.median ? d / first.median * 100 : 0;
+      const dir = Math.abs(pd) < 3 ? '整体持平'
+        : (pd < 0 ? '中位数成绩改善 ' + Math.abs(pd).toFixed(1) + '%（' + first.year + '→' + last.year + '）'
+                  : '中位数成绩变慢 ' + pd.toFixed(1) + '%（' + first.year + '→' + last.year + '）');
+      noteEl.textContent = dir + ' · 阴影=四分位区间（25%~75%）· n=该年样本量 · 鼠标悬停查看详情';
+      // 存数据供 hover 查询
+      canvas._ytData = { series: series, xOf: xOf, yOf: yOf, pad: pad, loBound: loBound, span: span, H: H, W: W };
+
+      // 年份完整数据横列表（含预测行）
+      renderYearTable(series, window.__ytForecast);
+      // 神经网络预测卡片（消费同一 forecast）
+      nnPredict(series, years, window.__ytForecast);
+    }
+
+    function renderYearTable(series, fcst) {
+      const el = document.getElementById('yearDataTable');
+      if (!el || !series.length) { if (el) el.innerHTML = ''; return; }
+      let html = '<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:640px;">' +
+        '<thead><tr style="color:var(--muted);text-align:right;">' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);text-align:left;">年份</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);">样本</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);color:#10b981;">最快</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);color:#5b6cff;">中位数</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);color:#b45309;">平均值</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);">25%</th>' +
+        '<th style="padding:6px 8px;border-bottom:2px solid var(--border);">75%</th>' +
+        '</tr></thead><tbody>';
+      series.forEach(s => {
+        html += '<tr style="text-align:right;">' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;font-weight:700;">' + s.year + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">' + s.n + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);font-weight:700;color:#10b981;">' + formatSecondsMinOnly(s.min) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);font-weight:700;color:#5b6cff;">' + formatSecondsMinOnly(s.median) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">' + formatSecondsMinOnly(s.mean) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">' + formatSecondsMinOnly(s.q1) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">' + formatSecondsMinOnly(s.q3) + '</td>' +
+          '</tr>';
+      });
+      if (fcst) {
+        html += '<tr style="text-align:right;border-top:2px dashed #5b6cff55;">' +
+          '<td style="padding:5px 8px;text-align:left;font-weight:800;color:#5b6cff;">' + fcst.nextYear + '<span style="font-weight:400;font-size:10px;"> (预测)</span></td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:#8a93a8;">NN</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">—</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);font-weight:800;color:#5b6cff;">' + formatSecondsMinOnly(fcst.median) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--muted);">—</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:#5b6cff99;">' + formatSecondsMinOnly(fcst.q1) + '</td>' +
+          '<td style="padding:5px 8px;border-bottom:1px solid var(--border);color:#5b6cff;">' + formatSecondsMinOnly(fcst.q3) + '</td>' +
+          '</tr>';
+      }
+      html += '</tbody></table>';
+      el.innerHTML = html;
+    }
+
+    // ==================== 轻量神经网络（纯前端） ====================
+    // 2-8-8-1 MLP，tanh 隐层，线性输出；输入=归一化年份序号，输出=归一化中位数。
+    // 用全部年份数据训练 → 预测下一年。样本少的年份权重低（通过样本量加权损失）。
+    function trainMLP(series, targetKey, epochs) {
+      const xs = series.map((s, i) => [i / (series.length - 1 || 1)]);
+      const ys = series.map(s => s[targetKey]);
+      const yMin = Math.min.apply(null, ys), yMax = Math.max.apply(null, ys);
+      const ySpan = (yMax - yMin) || 1;
+      const norm = ys.map(v => (v - yMin) / ySpan);
+      // 权重：样本量的平方根（少样本年份影响小）
+      const w = series.map(s => Math.sqrt(s.n));
+      const wSum = w.reduce((a, b) => a + b, 0);
+      const wNorm = w.map(v => v / wSum);
+
+      // 2-8-1 网络（输入1维：x；隐层8 tanh；输出1维线性）
+      const HN = 8;
+      let W1 = [], B1 = [];
+      for (let i = 0; i < HN; i++) { W1.push([(Math.random() * 2 - 1) * 0.8]); B1.push(0); }
+      let W2 = []; for (let i = 0; i < HN; i++) W2.push((Math.random() * 2 - 1) * 0.5);
+      let B2 = 0;
+      const lr = 0.08;
+
+      const fwd = x => {
+        const h = W1.map((w, i) => Math.tanh(w[0] * x + B1[i]));
+        const o = h.reduce((a, v, i) => a + v * W2[i], B2);
+        return { h: h, o: o };
+      };
+
+      for (let ep = 0; ep < epochs; ep++) {
+        // 累积加权梯度
+        const gW1 = W1.map(() => [0]), gB1 = B1.map(() => 0), gW2 = W2.map(() => 0);
+        let gB2 = 0;
+        for (let k = 0; k < xs.length; k++) {
+          const x = xs[k][0], t = norm[k], wt = wNorm[k];
+          const h = W1.map((wi, i) => Math.tanh(wi[0] * x + B1[i]));
+          const o = h.reduce((a, v, i) => a + v * W2[i], 0) + B2;
+          const err = o - t;
+          const dO = 2 * err * wt; // dLoss/dO，权重已含样本量
+          for (let i = 0; i < HN; i++) {
+            gW2[i] += dO * h[i];
+            const dh = dO * W2[i] * (1 - h[i] * h[i]); // tanh 导数
+            gW1[i][0] += dh * x;
+            gB1[i] += dh;
+          }
+          gB2 += dO;
+        }
+        for (let i = 0; i < HN; i++) {
+          W1[i][0] -= lr * gW1[i][0];
+          B1[i] -= lr * gB1[i];
+          W2[i] -= lr * gW2[i];
+        }
+        B2 -= lr * gB2;
+      }
+      // 返回预测函数：x = 下一年的归一化位置
+      return function (xNext) {
+        const r = fwd(xNext);
+        const val = r.o * ySpan + yMin;
+        return Math.max(0, val);
+      };
+    }
+
+    function nnForecast(series, years) {
+      if (series.length < 3) return null;
+      const nextYear = years[years.length - 1] + 1;
+      const predMed = trainMLP(series, 'median', 400);
+      const predQ1 = trainMLP(series, 'q1', 600);
+      const predQ3 = trainMLP(series, 'q3', 600);
+      if (!predMed || !predQ1 || !predQ3) return null;
+      const xNext = 1 + 1 / (series.length - 1);
+      const m = predMed(xNext);
+      const lastMed = series[series.length - 1].median;
+      return {
+        nextYear: nextYear,
+        median: m,
+        min: null,
+        q1: Math.min(predQ1(xNext), predQ3(xNext)),
+        q3: Math.max(predQ1(xNext), predQ3(xNext)),
+        mean: null,
+        n: 0,
+        forecast: true,
+        lastMed: lastMed,
+        diff: m - lastMed,
+        pct: lastMed ? Math.abs(m - lastMed) / lastMed * 100 : 0
+      };
+    }
+
+        function nnPredict(series, years, fcstIn) {
+      const el = document.getElementById('nnPredictBox');
+      if (!el) return;
+      const fcst = fcstIn || nnForecast(series, years);
+      if (!fcst) { el.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-top:12px;">年份过少，暂无法进行趋势预测</div>'; return; }
+      const dirTxt = Math.abs(fcst.pct) < 2 ? '基本持平'
+        : fcst.diff < 0 ? '预计提升 ' + fcst.pct.toFixed(1) + '%（变快）'
+                        : '预计放缓 ' + fcst.pct.toFixed(1) + '%（变慢）';
+      el.innerHTML =
+        '<div class="info-table" style="margin:12px 0 0;">' +
+        '<h3 style="font-size:14px;">下一年趋势预测 <span style="font-weight:400;font-size:11px;color:var(--muted);">（' + dirTxt + ' · 前端轻量神经网络 · 仅供参考）</span></h3>' +
+        '<div style="font-size:13px;line-height:2;">' +
+        '预测 <b>' + fcst.nextYear + ' 年中位数</b>：' +
+        '<b style="font-size:16px;color:#5b6cff;">' + formatSeconds(fcst.median) + '</b> ' +
+        '<span style="font-size:12px;color:' + (fcst.diff < 0 ? '#10b981' : '#ef4444') + ';">' +
+        (fcst.diff < 0 ? '↓ 较 ' + years[years.length - 1] + ' 年快 ' + formatSecondsMinOnly(Math.abs(fcst.diff))
+                  : '↑ 较 ' + years[years.length - 1] + ' 年慢 ' + formatSecondsMinOnly(fcst.diff)) + '</span>' +
+        '<br><span style="font-size:11px;color:var(--muted);">中间 50% 预计落在 ' + formatSecondsMinOnly(fcst.q1) + ' ~ ' + formatSecondsMinOnly(fcst.q3) +
+        ' · 模型：2-8-1 MLP（tanh）· 样本量加权训练</span>' +
+        '</div></div>';
+    }
+
+    // ---------- 历年演进图 hover 交互 ----------
+    (function initYearTrendHover() {
+      const canvas = document.getElementById('yearTrendChart');
+      const tip = document.getElementById('ytTip');
+      if (!canvas || !tip) return;
+
+      function fmt(v) { return formatSeconds(v); }
+
+      canvas.addEventListener('mousemove', e => {
+        const data = canvas._ytData;
+        if (!data) { tip.style.display = 'none'; return; }
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas._ytData.W / rect.width);
+        const { series, xOf, pad, W } = data;
+
+        // 找最近的年份 x
+        let best = null, bestDist = Infinity;
+        series.forEach(s => {
+          const d = Math.abs(xOf(s.year) - mx);
+          if (d < bestDist) { bestDist = d; best = s; }
+        });
+        if (!best || bestDist > 60) { tip.style.display = 'none'; return; }
+
+        tip.innerHTML =
+          '<div style="font-weight:800;font-size:13px;margin-bottom:3px;">' + best.year + ' 年 <span style="font-weight:400;opacity:.75;font-size:11px;">n=' + best.n + '</span></div>' +
+          '<div><span style="color:#34d399;">●</span> 当年最快：<b>' + fmt(best.min) + '</b></div>' +
+          '<div><span style="color:#8b8df5;">●</span> 中位数：<b>' + fmt(best.median) + '</b></div>' +
+          '<div><span style="color:#fbbf24;">●</span> 平均值：<b>' + fmt(best.mean) + '</b></div>' +
+          '<div style="color:#c7ccdb;font-size:11px;margin-top:2px;">中间 50%：' + fmt(best.q1) + ' ~ ' + fmt(best.q3) + '</div>';
+
+        // 位置：跟随鼠标，防溢出
+        const wrap = canvas.parentElement.getBoundingClientRect();
+        const px = (e.clientX - wrap.left) + 14;
+        const py = (e.clientY - wrap.top) - 10;
+        tip.style.left = Math.min(px, wrap.width - 230) + 'px';
+        tip.style.top = Math.max(0, py) + 'px';
+        tip.style.display = 'block';
+      });
+
+      canvas.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    })();
+
+    function hexA(hex, alpha) {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substring(0, 2), 16);
+      const g = parseInt(h.substring(2, 4), 16);
+      const b = parseInt(h.substring(4, 6), 16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
+
+    function renderTiers(times) {
+      const el = document.getElementById('tierTable');
+      if (!times.length) { el.innerHTML = '<span style="color:var(--muted);">暂无数据</span>'; return; }
+      const sorted = times.map(t => t.seconds).sort((a, b) => a - b);
+      const n = sorted.length;
+      const q = p => quantileSorted(sorted, p);
+      const maxV = sorted[n - 1];
+      const tiers = [
+        { name: '金锤', desc: '顶级',     lo: sorted[0], hi: q(0.10), fc: '#d97706' },
+        { name: '铁锤', desc: '高级',     lo: q(0.10), hi: q(0.35), fc: '#475569' },
+        { name: '碳锤', desc: '中级',     lo: q(0.35), hi: q(0.65), fc: '#4338ca' },
+        { name: '碳酸钙锤', desc: '低级', lo: q(0.65), hi: q(0.85), fc: '#0d9488' },
+        { name: '水锤', desc: '新人',     lo: q(0.85), hi: maxV,    fc: '#3b82f6' },
+      ];
+      el.innerHTML = tiers.map((t, ti) => {
+        const isLast = ti === tiers.length - 1;
+        const count = sorted.filter(v => v >= t.lo && (isLast ? v <= t.hi : v < t.hi)).length;
+        const pct = count / n * 100;
+        return '<div class="tier-row' + (ti === 0 ? ' tier-row-first' : '') + '">' +
+          '<span class="tier-bg" style="background:linear-gradient(90deg,' + hexA(t.fc, .10) + ',' + hexA(t.fc, 0) + ');"></span>' +
+          '<div class="tier-body">' +
+            '<div class="tier-info">' +
+              '<div class="tier-line1">' +
+                '<span class="tier-badge" style="background:' + hexA(t.fc, .12) + ';color:' + t.fc + ';"><span class="tier-dot" style="background:' + t.fc + ';"></span>' + t.name + '</span>' +
+                '<span class="tier-desc">（' + t.desc + '）</span>' +
+              '</div>' +
+              '<div class="tier-line2">' +
+                '<span class="tier-range">' + formatSecondsMinOnly(t.lo) + ' ~ ' + formatSecondsMinOnly(t.hi) + '</span>' +
+                '<span class="tier-count"><b>' + count + '</b> 条 · ' + pct.toFixed(0) + '%</span>' +
+              '</div>' +
+            '</div>' +
+            '<span class="tier-bar"><span class="tier-pct-fill" style="width:' + pct + '%;background:' + t.fc + ';"></span></span>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderInsights(times, yearMap) {
+      const list = document.getElementById('insightList');
+      const out = [];
+      if (times.length >= 5) {
+        const arr = times.map(t => t.seconds);
+        const sorted = arr.slice().sort((a, b) => a - b);
+        const n = sorted.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / n;
+        const median = quantileSorted(sorted, 0.5);
+        const q1 = quantileSorted(sorted, 0.25), q3 = quantileSorted(sorted, 0.75);
+        const p10 = quantileSorted(sorted, 0.10);
+
+        const top3 = sorted[2] != null ? sorted[2] : sorted[0];
+        out.push('<b>头部竞争</b>：最快 ' + formatSeconds(sorted[0]) + '，前 3 名咬合在 ' + formatSeconds(top3) + ' 之内；进入前 10% 需快于 ' + formatSeconds(p10) + '。');
+
+        const skew = median < mean ? '多数人快于均值，少量长尾拉高平均（正偏）' : '多数人慢于均值（负偏）';
+        out.push('<b>主体水平</b>：中位 ' + formatSeconds(median) + ' / 均值 ' + formatSeconds(mean) + '；50% 的纪录落在 ' + formatSeconds(q1) + ' ~ ' + formatSeconds(q3) + '，呈' + skew + '。');
+
+        const years = Array.from(yearMap.keys()).sort((a, b) => a - b).filter(y => yearMap.get(y).length >= 3);
+        if (years.length >= 2) {
+          const fm = quantileSorted(yearMap.get(years[0]).map(t => t.seconds).sort((a, b) => a - b), 0.5);
+          const lm = quantileSorted(yearMap.get(years[years.length - 1]).map(t => t.seconds).sort((a, b) => a - b), 0.5);
+          const dd = fm ? (lm - fm) / fm * 100 : 0;
+          const trend = Math.abs(dd) < 3 ? '基本持平（' + Math.abs(dd).toFixed(1) + '%）'
+            : dd < 0 ? '明显提升 ' + Math.abs(dd).toFixed(1) + '%' : '有所回落 ' + dd.toFixed(1) + '%';
+          out.push('<b>年间趋势</b>：' + years[0] + ' 年中位 ' + formatSeconds(fm) + ' → ' + years[years.length - 1] + ' 年中位 ' + formatSeconds(lm) + '，' + trend + '。');
+        }
+
+        if (currentPlat === 'all') {
+          const ps = ['PC', 'Android', 'iOS'].map(p => {
+            const v = times.filter(t => t.plat === p).map(t => t.seconds).sort((a, b) => a - b);
+            return { p: p, med: v.length >= 3 ? quantileSorted(v, 0.5) : null, n: v.length };
+          }).filter(x => x.med !== null);
+          if (ps.length >= 2) {
+            ps.sort((a, b) => a.med - b.med);
+            const gap = (ps[ps.length - 1].med - ps[0].med) / ps[0].med * 100;
+            out.push('<b>平台对比</b>：' + ps[0].p + ' 中位最快（' + formatSeconds(ps[0].med) + '），' + ps[ps.length - 1].p + ' 慢约 ' + gap.toFixed(1) + '%（样本 ' + ps.map(s => s.p + ' ' + s.n).join(' / ') + '）。');
+          }
+        }
+
+        if (myTimeSec !== null) {
+          let below = 0;
+          sorted.forEach(v => { if (v <= myTimeSec) below++; });
+          const pct = below / n * 100;
+          out.push('<b>你的位置</b>：超越 ' + pct.toFixed(1) + '% 纪录；进前 10% 需不超过 ' + formatSeconds(p10) + '（还差 ' + formatSeconds(Math.max(0, myTimeSec - p10)) + '）。');
+        }
+      }
+      list.innerHTML = out.length ? out.map(t => '<li>' + t + '</li>').join('') : '<li style="color:var(--muted);">数据不足（至少5条有效纪录）</li>';
+    }
+
+    const __origUpdateChart = updateChart;
+    updateChart = function () {
+      const r = __origUpdateChart.apply(this, arguments);
+      try {
+        const times = getFilteredTimes();
+        const wrap = document.getElementById('analysisWrap');
+        if (!times.length) { wrap.style.display = 'none'; return r; }
+        wrap.style.display = '';
+        const ym = analyzeTrends(times);
+        drawYearTrend(ym);
+        renderTiers(times);
+        renderInsights(times, ym);
+        document.getElementById('yearTrendBasis').textContent =
+          '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议') + '）';
+      } catch (e) { console.warn('analysis error', e); }
+      return r;
+    };
     loadData().then(() => {
       document.getElementById('loading').style.display = 'none';
       updateChart();

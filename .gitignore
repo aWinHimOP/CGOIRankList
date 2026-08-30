@@ -24,3 +24,7 @@ backups/
 # ===== 本地开发杂项 =====
 *.log
 *.tmp
+
+# Android project (local only)
+android-app/
+
