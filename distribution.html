@@ -178,8 +178,8 @@
     .m-columns { display:flex; gap:22px; align-items:flex-start; max-height:480px; overflow-y:auto; }
     .m-col { display:flex; flex-direction:column; gap:2px; flex:1; min-width:330px; }
     .m-row {
-      display:grid; grid-template-columns:84px 1fr 84px 72px 40px;
-      gap:8px; align-items:center; padding:4px 6px; border-radius:6px; font-size:11.5px;
+      display:grid; grid-template-columns:84px 1fr 92px 76px 48px;
+      gap:10px; align-items:center; padding:4px 6px; border-radius:6px; font-size:11.5px;
     }
     .m-row:nth-child(odd):not(.m-head) { background:#f8f9fc; }
     .m-head {
@@ -837,7 +837,7 @@
         btn.disabled = true;
         btn.textContent = '生成中...';
         const wrap = document.createElement('div');
-        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:1140px;';
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:2240px;';
         const title = document.createElement('div');
         title.style.cssText = 'font-size:20px;font-weight:800;color:#1f2533;';
         title.textContent = '通关时间分布 · CGOI';
@@ -850,11 +850,11 @@
         img.style.cssText = 'width:100%;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
         wrap.appendChild(img);
 
-        // —— 2/3. 左栏（统计 + 趋势分析）+ 右栏（逐月全体水平）——
+        // —— 2/3. 左栏（主图宽度的统计+趋势分析）+ 右栏（同宽的逐月水平）——
         const contentRow = document.createElement('div');
-        contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
+        contentRow.style.cssText = 'display:flex;gap:20px;align-items:flex-start;width:100%;';
         const leftCol = document.createElement('div');
-        leftCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        leftCol.style.cssText = 'flex:0 0 1100px;min-width:0;display:flex;flex-direction:column;gap:14px;';
 
         const statEl = document.querySelector('.container .info-table');
         if (statEl) {
@@ -890,18 +890,18 @@
         }
         contentRow.appendChild(leftCol);
 
-        // —— 右栏：逐月全体水平 ——
+        // —— 右栏：逐月全体水平（宽度=主分布图 1100px）——
         const monthlySrc = document.getElementById('monthlyWrap');
         if (monthlySrc && monthlySrc.style.display !== 'none') {
           const m2 = monthlySrc.cloneNode(true);
-          m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:480px;flex-shrink:0;margin:0;';
+          m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:1100px;flex-shrink:0;margin:0;';
           const cols = m2.querySelector('.m-columns');
           if (cols) {
             cols.style.maxHeight = 'none';
             cols.style.overflow = 'visible';
             cols.style.flexWrap = 'wrap'; // 超过100个月时在栏内换列而不是横向溢出
           }
-          m2.querySelectorAll('.m-col').forEach(el => { el.style.minWidth = '360px'; el.style.flex = '0 0 auto'; });
+          m2.querySelectorAll('.m-col').forEach(el => { el.style.minWidth = '1000px'; el.style.flex = '0 0 auto'; });
           m2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(m2);
         }
