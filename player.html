@@ -235,6 +235,57 @@
     .gen-btn:hover { opacity: .85; }
     .gen-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+    .trend-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px 10px;
+      margin-bottom: 14px;
+    }
+    .trend-title { font-weight: 800; font-size: 14px; margin-bottom: 2px; }
+    .trend-note { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.7; }
+    .stats-cards { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .stat-card {
+      flex: 1; min-width: 100px;
+      background: linear-gradient(135deg, #f0f2ff 0%, #fafbff 100%);
+      border: 1px solid #e0e4f5; border-radius: 10px;
+      padding: 10px 12px 8px; text-align: center;
+    }
+    .stat-num { font-size: 19px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .stat-cap { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .trend-columns { display: flex; gap: 18px; align-items: flex-start; max-height: 460px; overflow-y: auto; }
+    .trend-columns > div { min-width: 0; }
+    .t-row {
+      display: grid;
+      grid-template-columns: 86px 1fr 84px 64px 44px;
+      gap: 10px; align-items: center;
+      font-size: 12px; padding: 4px 6px; border-radius: 6px;
+    }
+    .t-row:nth-child(odd) { background: #f8f9fc; }
+    .t-label { color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .t-track {
+      position: relative; height: 14px;
+      background: #eef0f6; border-radius: 7px; overflow: hidden;
+    }
+    .t-bar {
+      display: block; height: 100%;
+      background: linear-gradient(90deg, #8b9aff, #5b6cff);
+      border-radius: 7px;
+      min-width: 14px;
+    }
+    .t-avg {
+      position: absolute; top: -2px; bottom: -2px; width: 2.5px;
+      background: #1f2533; border-radius: 2px; transform: translateX(-1px);
+    }
+    .t-val { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+    .t-avgv { color: var(--muted); font-size: 11px; text-align: right; white-space: nowrap; }
+    .t-cnt { color: var(--muted); font-size: 11px; text-align: right; white-space: nowrap; }
+    .trend-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 26px 0; }
+    @media (max-width: 600px) {
+      .t-row { grid-template-columns: 70px 1fr 76px; }
+      .t-avgv, .t-cnt { display: none; }
+    }
+
     .list { display: flex; flex-direction: column; gap: 10px; }
     .row {
       display: grid;
@@ -351,6 +402,12 @@
         <button class="filter-btn" data-plat="iOS">iOS</button>
       </div>
       <button class="gen-btn" id="genBtn" onclick="generateImage()">生成长图</button>
+    </div>
+    <div class="trend-card" id="trendCard" style="display:none;">
+      <div class="trend-title">实力可视化</div>
+      <div class="trend-note">条形越长 = 当月成绩越快 · 黑色竖线 = 当月平均位置 · 带 [*] 的成绩不计入</div>
+      <div id="trendList"></div>
+      <div class="trend-empty" id="trendEmpty" style="display:none;">暂无可按月统计的纪录日期</div>
     </div>
     <div class="list" id="list"></div>
     <div class="empty" id="empty" style="display:none;">
@@ -470,6 +527,10 @@
           <div class="r-date">${escapeHtml(item.date || '')}</div>
         </div>`;
       }).join('');
+
+      // 数据变化后重建实力可视化
+      buildTrendData(playerRecords);
+      renderTrend();
     }
 
     // ===== 计算排名 =====
@@ -504,6 +565,206 @@
       // 用当前玩家的身份键查找排名
       const myKey = playerKey({ player: playerName, homepage: playerHomepage || undefined });
       return ranks[myKey] || {};
+    }
+
+    // ===== 实力可视化（总览卡片 + 逐月条形图，DOM 渲染避免文字重叠）=====
+    let trendData = []; // [{ym, label, best, avg, allCount}]
+    const MONTH_LABELS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+    function isDisputedTime(t) {
+      return String(t || '').includes('*');
+    }
+
+    function buildTrendData(records) {
+      const byMonth = {};
+      records.forEach(r => {
+        if (isDisputedTime(r.time)) return; // 带 [*] 的争议成绩不计入
+        const m = String(r.date || '').match(/^(\d{4})[-/.年](\d{1,2})/);
+        if (!m) return;
+        const ym = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0');
+        if (!byMonth[ym]) byMonth[ym] = [];
+        byMonth[ym].push(r);
+      });
+
+      trendData = Object.keys(byMonth).sort().map(ym => {
+        const recs = byMonth[ym];
+        let best = recs[0];
+        recs.forEach(r => { if (r._sec < best._sec) best = r; });
+        const avg = recs.reduce((s, r) => s + r._sec, 0) / recs.length;
+        const [y, mo] = ym.split('-');
+        return {
+          ym,
+          label: y + ' ' + MONTH_LABELS[parseInt(mo, 10) - 1],
+          best,
+          avg,
+          allCount: recs.length
+        };
+      });
+    }
+
+    function fmtShort(v) {
+      const m = Math.floor(v / 60), s = v - m * 60;
+      return m > 0 ? m + 'm' + (s < 10 ? '0' : '') + (Number.isInteger(s) ? s : +s.toFixed(1)) : (+s.toFixed(1)) + 's';
+    }
+
+    function statCardHtml(num, cap) {
+      return '<div class="stat-card"><div class="stat-num">' + num + '</div><div class="stat-cap">' + cap + '</div></div>';
+    }
+
+    // 总览大数字卡片
+    function renderOverviewCards(el) {
+      const valid = playerRecords.filter(r => !isDisputedTime(r.time));
+      if (valid.length === 0) return;
+      let pb = valid[0];
+      valid.forEach(r => { if (r._sec < pb._sec) pb = r; });
+      const avgAll = valid.reduce((s, r) => s + r._sec, 0) / valid.length;
+
+      const now = Date.now();
+      const recent = valid.filter(r => {
+        const m = String(r.date || '').match(/^(\d{4})[-/.年](\d{1,2})[-/.月]?\D?(\d{1,2})?/);
+        if (!m) return false;
+        const t = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3] || '1', 10)).getTime();
+        return isFinite(t) && (now - t) / 86400000 <= 90;
+      });
+      let recentHtml = '';
+      if (recent.length > 0) {
+        let rb = recent[0];
+        recent.forEach(r => { if (r._sec < rb._sec) rb = r; });
+        recentHtml = statCardHtml(escapeHtml(rb.time), '近90天最快');
+      }
+
+      const platName = pb.platform === 'Android' ? '安卓' : (pb.platform || '');
+      el.innerHTML =
+        statCardHtml(escapeHtml(pb.time), '个人最快' + (platName ? '（' + escapeHtml(platName) + '）' : '')) +
+        statCardHtml(fmtShort(avgAll), '平均成绩') +
+        statCardHtml(String(playerRecords.length), '总纪录数') +
+        statCardHtml(trendData.length > 0 ? String(trendData.length) : '—', '活跃月份数') +
+        recentHtml;
+    }
+
+    // 逐月条形图 DOM（页面与长图共用）：条越长 = 越快
+    function renderTrendInto(el, opts) {
+      opts = opts || {};
+      if (trendData.length === 0) return;
+
+      if (opts.forImage) {
+        const t = document.createElement('div');
+        t.style.cssText = 'font-size:15px;font-weight:800;color:#1f2533;margin-bottom:8px;';
+        t.textContent = '实力可视化';
+        el.appendChild(t);
+      }
+
+      const cards = document.createElement('div');
+      cards.className = 'stats-cards';
+      renderOverviewCards(cards);
+
+      // Excel 式列头：说明每列各字段含义（页面内放在条形区顶部，长图放在列区上方）
+      function buildColumnHeader() {
+        // 图例行
+        const legend = document.createElement('div');
+        legend.style.cssText = 'font-size:10.5px;color:#8a93a8;background:#f8f9fc;border:1px solid #e8eaf1;border-radius:7px;padding:7px 10px;margin-bottom:8px;line-height:1.8;';
+        legend.innerHTML =
+          '<span style="display:inline-block;width:22px;height:10px;background:linear-gradient(90deg,#8b9aff,#5b6cff);border-radius:5px;vertical-align:middle;margin-right:5px;"></span>蓝色条 = 当月最快成绩的相对快慢（自动缩放：最快月=满格，最慢数据点仍有 45% 可读宽度，越慢越短）' +
+          '<span style="display:inline-block;width:3px;height:14px;background:#1f2533;border-radius:2px;vertical-align:middle;margin:0 5px 0 14px;"></span>黑色竖线 = 当月平均成绩所处位置' +
+          '<br>「当月最佳」= 该月刷新出的最好成绩 ·「当月平均」/「条数」= 该月全部有效成绩的均值与数量 · 带 <span style="color:#f59e0b;">*</span> 的最佳成绩为有争议纪录';
+
+        // 字段列头
+        const h = document.createElement('div');
+        h.style.cssText = 'display:flex;gap:10px;font-size:10.5px;font-weight:700;color:#6b7280;border-bottom:1px solid #e8eaf1;padding:0 6px 5px;margin-bottom:6px;white-space:nowrap;';
+        h.innerHTML =
+          '<span style="width:86px;flex-shrink:0;">月份</span>' +
+          '<span style="flex:1;min-width:0;">成绩快慢</span>' +
+          '<span style="width:84px;flex-shrink:0;text-align:right;">当月最佳</span>' +
+          '<span style="width:64px;flex-shrink:0;text-align:right;">当月平均</span>' +
+          '<span style="width:44px;flex-shrink:0;text-align:right;">条数</span>';
+
+        const wrap2 = document.createElement('div');
+        wrap2.appendChild(legend);
+        wrap2.appendChild(h);
+        return wrap2;
+      }
+
+      const fastest = Math.min(...trendData.map(d => d.best._sec));
+      // 自适应标定：找全部数据点(含各月平均)中最慢者，把 [最快, 最慢] 映射到 [100%, 45%]，
+      // 让月际差异一目了然又不会出现几乎看不见的短条
+      let slowest = 0;
+      trendData.forEach(d => { slowest = Math.max(slowest, d.best._sec, d.avg); });
+      const MAX_PCT = 100, MIN_PCT = 45;
+      const toPct = v => {
+        if (slowest <= fastest) return MAX_PCT; // 只有一个数据点
+        return MIN_PCT + (fastest / v - fastest / slowest) / (1 - fastest / slowest) * (MAX_PCT - MIN_PCT);
+      };
+      const rows = [];
+      trendData.forEach(d => {
+        const pct = Math.max(MIN_PCT, Math.round(toPct(d.best._sec)));
+        const avgPct = Math.max(3, Math.round(toPct(d.avg)));
+        const dis = isDisputedTime(d.best.time) ? '<span style="color:#f59e0b;">*</span>' : '';
+        rows.push(
+          '<div class="t-row" title="' + escapeHtml(d.label) + '｜最佳 ' + escapeHtml(d.best.time) +
+          ' · 平均 ' + fmtShort(d.avg) + '（当月 ' + d.allCount + ' 条）">' +
+            '<span class="t-label">' + escapeHtml(d.label) + '</span>' +
+            '<span class="t-track">' +
+              '<span class="t-bar" style="width:' + pct + '%;"></span>' +
+              '<span class="t-avg" style="left:' + avgPct + '%;"></span>' +
+            '</span>' +
+            '<span class="t-val">' + escapeHtml(d.best.time) + dis + '</span>' +
+            '<span class="t-avgv">均 ' + fmtShort(d.avg) + '</span>' +
+            '<span class="t-cnt">' + d.allCount + ' 条</span>' +
+          '</div>'
+        );
+      });
+
+      // 分列：每 100 行一列，一列满员就往右新开一列（与成绩列表分栏一致）
+      const PER_COL = 100;
+      const columns = [];
+      for (let s = 0; s < rows.length; s += PER_COL) {
+        const col = document.createElement('div');
+        col.style.cssText = opts.forImage
+          ? 'display:flex;flex-direction:column;gap:3px;width:726px;flex-shrink:0;' // 行宽对齐成绩两列(760px 减 box 内边距 32px)
+          : 'display:flex;flex-direction:column;gap:3px;min-width:340px;flex:1;';
+        col.innerHTML = rows.slice(s, s + PER_COL).join('');
+        columns.push(col);
+      }
+
+      const columnsWrap = document.createElement('div');
+      if (opts.forImage) {
+        // 长图模式：不限高、不裁剪，横向自然扩展
+        columnsWrap.style.cssText = 'display:flex;gap:20px;align-items:flex-start;flex-wrap:nowrap;';
+      } else {
+        // 页面模式：限高内部滚动
+        columnsWrap.className = 'trend-columns';
+      }
+      columns.forEach(c => columnsWrap.appendChild(c));
+
+      // 表头 + 列区 组合
+      const gridBlock = document.createElement('div');
+      gridBlock.appendChild(buildColumnHeader());
+      gridBlock.appendChild(columnsWrap);
+
+      if (opts.forImage) {
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#ffffff;border:1px solid #e8eaf1;border-radius:10px;padding:12px 16px;';
+        box.appendChild(cards);
+        box.appendChild(gridBlock);
+        el.appendChild(box);
+      } else {
+        el.appendChild(cards);
+        el.appendChild(gridBlock);
+      }
+    }
+
+    // 页面内渲染入口
+    function renderTrend() {
+      const card = document.getElementById('trendCard');
+      const list = document.getElementById('trendList');
+      if (!playerRecords.length || trendData.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+      card.style.display = '';
+      document.getElementById('trendEmpty').style.display = 'none';
+      list.innerHTML = '';
+      renderTrendInto(list, { forImage: false });
     }
 
     // ===== 生成长图 =====
@@ -588,6 +849,16 @@
           columnsRow.appendChild(col);
         }
         wrapper.appendChild(columnsRow);
+
+        // ===== 实力可视化（DOM 渲染，直接追加进长图；默认占成绩两列的宽度）=====
+        if (trendData.length > 0) {
+          const chartSection = document.createElement('div');
+          // 成绩列宽 370px + 间距 20px → 两列 = 760px
+          chartSection.style.cssText = 'margin-top:4px;width:760px;max-width:100%;';
+          renderTrendInto(chartSection, { forImage: true });
+          wrapper.appendChild(chartSection);
+        }
+
         document.body.appendChild(wrapper);
 
         html2canvas(wrapper, {
