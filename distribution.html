@@ -174,10 +174,31 @@
       background:var(--border); border-radius:6px; overflow:hidden;
     }
     .tier-pct-fill { display:block; height:100%; border-radius:6px; transition:width .45s cubic-bezier(.22,.9,.35,1); }
+    /* ===== 逐月全体水平 ===== */
+    .m-columns { display:flex; gap:22px; align-items:flex-start; max-height:480px; overflow-y:auto; }
+    .m-col { display:flex; flex-direction:column; gap:2px; flex:1; min-width:330px; }
+    .m-row {
+      display:grid; grid-template-columns:84px 1fr 92px 76px 48px;
+      gap:10px; align-items:center; padding:4px 6px; border-radius:6px; font-size:11.5px;
+    }
+    .m-row:nth-child(odd):not(.m-head) { background:#f8f9fc; }
+    .m-head {
+      font-size:10.5px; font-weight:700; color:#6b7280;
+      border-bottom:1px solid var(--border); padding-bottom:5px; margin-bottom:4px; white-space:nowrap;
+    }
+    .m-label { color:var(--muted); font-weight:600; white-space:nowrap; }
+    .m-track { position:relative; height:13px; background:#eef0f6; border-radius:7px; overflow:hidden; }
+    .m-bar { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#8b9aff,#5b6cff); border-radius:7px; min-width:8px; }
+    .m-avgmark { position:absolute; top:-2px; bottom:-2px; width:2.5px; background:#1f2533; border-radius:2px; }
+    .m-vals { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+    .m-med { color:var(--muted); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+    .m-cnt { color:var(--muted); text-align:right; white-space:nowrap; }
     @media (max-width: 600px) {
       .container { padding: 12px; }
       .controls { flex-direction: column; align-items: stretch; }
       .self-input { flex-direction: column; align-items: stretch; }
+      .m-row { grid-template-columns:70px 1fr 84px; }
+      .m-med, .m-cnt { display:none; }
     }
   </style>
 </head>
@@ -294,8 +315,27 @@
           </ul>
         </div>
       </div>
+
+      <!-- ===== 逐月全体水平走势 ===== -->
+      <div class="info-table" id="monthlyWrap" style="display:none;margin-top:12px;">
+        <h3 style="font-size:14px;">逐月全体水平 <span id="monthBasis" style="font-weight:400;font-size:11px;"></span></h3>
+        <div class="m-legend" style="font-size:10.5px;color:#8a93a8;background:#f8f9fc;border:1px solid #e8eaf1;border-radius:7px;padding:7px 10px;margin-bottom:8px;line-height:1.8;">
+          每行 = 一个月 · <span style="display:inline-block;width:22px;height:10px;background:linear-gradient(90deg,#8b9aff,#5b6cff);border-radius:5px;vertical-align:middle;margin-right:4px;"></span>蓝色条 = 当月全体水平（自动缩放：最快月=满格，最慢仍有45%可读宽度，越慢越短）
+          · <span style="display:inline-block;width:3px;height:14px;background:#1f2533;border-radius:2px;vertical-align:middle;margin:0 4px 0 8px;"></span>黑竖线 = 当月中位数位置
+          · 显示当月最快 / 中位 / 参与人数 · 时间越短越好
+        </div>
+        <div>
+          <div class="m-row m-head">
+            <span class="m-label">月份</span>
+            <span class="m-track-h">全体水平（条越长 = 越快）</span>
+            <span class="m-val">最快</span>
+            <span class="m-med">中位</span>
+            <span class="m-cnt">人数</span>
+          </div>
+        </div>
+        <div id="monthColumns" class="m-columns"></div>
+      </div>
     </div>
-  </div>
 
   <style>.spinner { border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin .6s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }</style>
 
@@ -832,6 +872,11 @@
             yimg.style.cssText = 'width:100%;display:block;';
             dstYear.replaceWith(yimg);
           }
+          // 逐月面板：解除限高让 html2canvas 捕获全部行（滚动裁剪坑）
+          c2.querySelectorAll('.m-columns').forEach(el => {
+            el.style.maxHeight = 'none';
+            el.style.overflow = 'visible';
+          });
           // 去掉克隆里的 id，避免与页面内重复
           c2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           wrap.appendChild(c2);
@@ -1335,6 +1380,89 @@
       list.innerHTML = out.length ? out.map(t => '<li>' + t + '</li>').join('') : '<li style="color:var(--muted);">数据不足（至少5条有效纪录）</li>';
     }
 
+    // ==================== 逐月全体水平 ====================
+    const MONTH_CN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+    function buildMonthly(times) {
+      const byMonth = new Map();
+      times.forEach(t => {
+        const m = String(t.date || '').match(/^(20\d{2}|19\d{2})[-/.年](\d{1,2})/);
+        if (!m) return;
+        const ym = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0');
+        if (!byMonth.has(ym)) byMonth.set(ym, []);
+        byMonth.get(ym).push(t.seconds);
+      });
+      // 输出全部月份（含仅1条的），从最早到最新
+      return Array.from(byMonth.keys()).sort().map(ym => {
+        const arr = byMonth.get(ym);
+        const sorted = arr.slice().sort((a, b) => a - b);
+        const [y, mo] = ym.split('-');
+        return {
+          ym,
+          label: y + ' ' + MONTH_CN[parseInt(mo, 10) - 1],
+          best: sorted[0],
+          median: quantileSorted(sorted, 0.5),
+          n: sorted.length
+        };
+      });
+    }
+
+    function renderMonthly(rows) {
+      const panel = document.getElementById('monthlyWrap');
+      const grid = document.getElementById('monthColumns');
+      if (!rows.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
+      panel.style.display = '';
+
+      document.getElementById('monthBasis').textContent =
+        '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议')
+        + (currentPlat === 'all' ? ' · 全平台' : ' · ' + (currentPlat === 'Android' ? '安卓' : currentPlat)) + '）';
+
+      // 自适应标定：全体数据点（含各月中位）中，最快 = 满格，最慢 = 45%
+      const fastest = Math.min(...rows.map(r => r.best));
+      let slowest = 0;
+      rows.forEach(r => { slowest = Math.max(slowest, r.best, r.median); });
+      const MIN_PCT = 45;
+      const toPct = v => {
+        if (slowest <= fastest) return 100;
+        return MIN_PCT + (fastest / v - fastest / slowest) / (1 - fastest / slowest) * (100 - MIN_PCT);
+      };
+
+      const rowHtmls = rows.map(r => {
+        const pct = Math.max(MIN_PCT, Math.round(toPct(r.best)));
+        const medPct = Math.max(2, Math.round(toPct(r.median)));
+        // 条从左侧生长：越快越长（与玩家页实力可视化一致）。中位竖线按同一比例摆放
+        return '<div class="m-row" title="' + escapeHtmlAttr(r.label) + '｜最快 ' + escapeHtmlAttr(formatSecondsMinOnly(r.best)) +
+          ' · 中位 ' + escapeHtmlAttr(formatSecondsMinOnly(r.median)) + '（' + r.n + ' 人/条）">' +
+          '<span class="m-label">' + escapeHtmlAttr(r.label) + '</span>' +
+          '<span class="m-track">' +
+            '<span class="m-bar" style="width:' + pct + '%;"></span>' +
+            '<span class="m-avgmark" style="left:' + medPct + '%;"></span>' +
+          '</span>' +
+          '<span class="m-vals">' + escapeHtmlAttr(formatSecondsMinOnly(r.best)) + '</span>' +
+          '<span class="m-med">中 ' + escapeHtmlAttr(formatSecondsMinOnly(r.median)) + '</span>' +
+          '<span class="m-cnt">' + r.n + '</span>' +
+        '</div>';
+      });
+
+      // 每100行分一列（一列满员再往右新开一列）
+      const PER_COL = 100;
+      const colArr = [];
+      const cols = [];
+      for (let i = 0; i < rowHtmls.length; i++) {
+        colArr.push(rowHtmls[i]);
+        if (colArr.length === PER_COL || i === rowHtmls.length - 1) {
+          cols.push('<div class="m-col">' + colArr.join('') + '</div>');
+          colArr.length = 0;
+        }
+      }
+      grid.innerHTML = cols.join('');
+    }
+
+    function escapeHtmlAttr(s) {
+      return (s == null ? '' : String(s))
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     const __origUpdateChart = updateChart;
     updateChart = function () {
       const r = __origUpdateChart.apply(this, arguments);
@@ -1347,8 +1475,12 @@
         drawYearTrend(ym);
         renderTiers(times);
         renderInsights(times, ym);
+        renderMonthly(buildMonthly(times));
         document.getElementById('yearTrendBasis').textContent =
           '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议') + '）';
+        document.getElementById('monthBasis').textContent =
+          '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议')
+          + ' · ' + (currentPlat === 'all' ? '全平台' : (currentPlat === 'Android' ? '安卓' : currentPlat)) + '）';
       } catch (e) { console.warn('analysis error', e); }
       return r;
     };
