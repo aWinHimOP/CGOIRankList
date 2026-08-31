@@ -178,8 +178,8 @@
     .m-columns { display:flex; gap:22px; align-items:flex-start; max-height:480px; overflow-y:auto; }
     .m-col { display:flex; flex-direction:column; gap:2px; flex:1; min-width:330px; }
     .m-row {
-      display:grid; grid-template-columns:84px 1fr 92px 76px 48px;
-      gap:10px; align-items:center; padding:4px 6px; border-radius:6px; font-size:11.5px;
+      display:grid; grid-template-columns:84px 1fr 84px 72px 40px;
+      gap:8px; align-items:center; padding:4px 6px; border-radius:6px; font-size:11.5px;
     }
     .m-row:nth-child(odd):not(.m-head) { background:#f8f9fc; }
     .m-head {
@@ -850,15 +850,19 @@
         img.style.cssText = 'width:100%;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
         wrap.appendChild(img);
 
-        // —— 2. 统计数据卡片 ——
+        // —— 2/3. 左栏（统计 + 趋势分析）+ 右栏（逐月全体水平）——
+        const contentRow = document.createElement('div');
+        contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
+        const leftCol = document.createElement('div');
+        leftCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
+
         const statEl = document.querySelector('.container .info-table');
         if (statEl) {
           const c1 = statEl.cloneNode(true);
           c1.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;';
-          wrap.appendChild(c1);
+          leftCol.appendChild(c1);
         }
 
-        // —— 3. 整体趋势分析块（历年演进 canvas 转图片 + 分层 + 洞察）——
         const analysisEl = document.getElementById('analysisWrap');
         if (analysisEl && analysisEl.style.display !== 'none') {
           const c2 = analysisEl.cloneNode(true);
@@ -872,15 +876,37 @@
             yimg.style.cssText = 'width:100%;display:block;';
             dstYear.replaceWith(yimg);
           }
-          // 逐月面板：解除限高让 html2canvas 捕获全部行（滚动裁剪坑）
+          // 逐月面板从分析块中移出（长图里放右边）
+          const mInClone = c2.querySelector('#monthlyWrap');
+          if (mInClone) mInClone.remove();
+          // 解除列区限高让 html2canvas 捕获全部行（滚动裁剪坑）
           c2.querySelectorAll('.m-columns').forEach(el => {
             el.style.maxHeight = 'none';
             el.style.overflow = 'visible';
           });
           // 去掉克隆里的 id，避免与页面内重复
           c2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          wrap.appendChild(c2);
+          leftCol.appendChild(c2);
         }
+        contentRow.appendChild(leftCol);
+
+        // —— 右栏：逐月全体水平 ——
+        const monthlySrc = document.getElementById('monthlyWrap');
+        if (monthlySrc && monthlySrc.style.display !== 'none') {
+          const m2 = monthlySrc.cloneNode(true);
+          m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:480px;flex-shrink:0;margin:0;';
+          const cols = m2.querySelector('.m-columns');
+          if (cols) {
+            cols.style.maxHeight = 'none';
+            cols.style.overflow = 'visible';
+            cols.style.flexWrap = 'wrap'; // 超过100个月时在栏内换列而不是横向溢出
+          }
+          m2.querySelectorAll('.m-col').forEach(el => { el.style.minWidth = '360px'; el.style.flex = '0 0 auto'; });
+          m2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          contentRow.appendChild(m2);
+        }
+
+        wrap.appendChild(contentRow);
 
         // —— 4. 底部水印行 ——
         const foot = document.createElement('div');
@@ -1439,7 +1465,7 @@
             '<span class="m-avgmark" style="left:' + medPct + '%;"></span>' +
           '</span>' +
           '<span class="m-vals">' + escapeHtmlAttr(formatSecondsMinOnly(r.best)) + '</span>' +
-          '<span class="m-med">中 ' + escapeHtmlAttr(formatSecondsMinOnly(r.median)) + '</span>' +
+          '<span class="m-med">' + escapeHtmlAttr(formatSecondsMinOnly(r.median)) + '</span>' +
           '<span class="m-cnt">' + r.n + '</span>' +
         '</div>';
       });
