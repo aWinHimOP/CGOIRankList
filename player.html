@@ -528,8 +528,8 @@
         </div>`;
       }).join('');
 
-      // 数据变化后重建实力可视化
-      buildTrendData(playerRecords);
+      // 数据变化后重建实力可视化（跟随平台筛选）
+      buildTrendData(filtered);
       renderTrend();
     }
 
@@ -569,6 +569,7 @@
 
     // ===== 实力可视化（总览卡片 + 逐月条形图，DOM 渲染避免文字重叠）=====
     let trendData = []; // [{ym, label, best, avg, allCount}]
+    let trendSource = []; // 当前筛选下的记录快照（与 trendData 同步）
     const MONTH_LABELS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
     function isDisputedTime(t) {
@@ -576,6 +577,7 @@
     }
 
     function buildTrendData(records) {
+      trendSource = records.slice();
       const byMonth = {};
       records.forEach(r => {
         if (isDisputedTime(r.time)) return; // 带 [*] 的争议成绩不计入
@@ -611,13 +613,15 @@
       return '<div class="stat-card"><div class="stat-num">' + num + '</div><div class="stat-cap">' + cap + '</div></div>';
     }
 
-    // 总览大数字卡片
+    // 总览大数字卡片（基于当前筛选的 trendSource）
     function renderOverviewCards(el) {
-      const valid = playerRecords.filter(r => !isDisputedTime(r.time));
+      const valid = trendSource.filter(r => !isDisputedTime(r.time));
       if (valid.length === 0) return;
       let pb = valid[0];
       valid.forEach(r => { if (r._sec < pb._sec) pb = r; });
       const avgAll = valid.reduce((s, r) => s + r._sec, 0) / valid.length;
+
+      const platLabel = currentPlat === 'all' ? (pb.platform === 'Android' ? '安卓' : (pb.platform || '')) : (currentPlat === 'Android' ? '安卓' : currentPlat);
 
       const now = Date.now();
       const recent = valid.filter(r => {
@@ -633,11 +637,10 @@
         recentHtml = statCardHtml(escapeHtml(rb.time), '近90天最快');
       }
 
-      const platName = pb.platform === 'Android' ? '安卓' : (pb.platform || '');
       el.innerHTML =
-        statCardHtml(escapeHtml(pb.time), '个人最快' + (platName ? '（' + escapeHtml(platName) + '）' : '')) +
+        statCardHtml(escapeHtml(pb.time), '个人最快' + (platLabel ? '（' + escapeHtml(platLabel) + '）' : '')) +
         statCardHtml(fmtShort(avgAll), '平均成绩') +
-        statCardHtml(String(playerRecords.length), '总纪录数') +
+        statCardHtml(String(trendSource.length), '总纪录数') +
         statCardHtml(trendData.length > 0 ? String(trendData.length) : '—', '活跃月份数') +
         recentHtml;
     }
@@ -650,7 +653,7 @@
       if (opts.forImage) {
         const t = document.createElement('div');
         t.style.cssText = 'font-size:15px;font-weight:800;color:#1f2533;margin-bottom:8px;';
-        t.textContent = '实力可视化';
+        t.textContent = '实力可视化' + (opts.platLabel ? '（' + opts.platLabel + '）' : '');
         el.appendChild(t);
       }
 
@@ -855,7 +858,7 @@
           const chartSection = document.createElement('div');
           // 成绩列宽 370px + 间距 20px → 两列 = 760px
           chartSection.style.cssText = 'margin-top:4px;width:760px;max-width:100%;';
-          renderTrendInto(chartSection, { forImage: true });
+          renderTrendInto(chartSection, { forImage: true, platLabel: currentPlat === 'all' ? null : (currentPlat === 'Android' ? '安卓' : currentPlat) });
           wrapper.appendChild(chartSection);
         }
 
