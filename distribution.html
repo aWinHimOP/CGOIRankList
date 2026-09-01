@@ -915,25 +915,30 @@
           '<span style="font-size:12px;color:#8a93a8;">' + escapeHtmlAttr(document.getElementById('heatBasis').textContent || '') + '</span>';
         wrap.appendChild(title);
 
-        // —— 1. 主分布图（canvas → img）——
+        // —— 行2：主分布图（左 1120px）+ 统计数据（右 540px）并排 ——
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
         const canvasSrc = document.getElementById('chart');
         const img = document.createElement('img');
         img.src = canvasSrc.toDataURL('image/png');
-        img.style.cssText = 'width:100%;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);';
-        wrap.appendChild(img);
-
-        // —— 2/3. 左栏（主图宽度的统计+趋势分析）+ 右栏（同宽的逐月水平）——
-        const contentRow = document.createElement('div');
-        contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
-        const leftCol = document.createElement('div');
-        leftCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        img.style.cssText = 'width:1120px;display:block;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,60,.06);flex-shrink:0;';
+        topRow.appendChild(img);
 
         const statEl = document.querySelector('.container .info-table');
         if (statEl) {
           const c1 = statEl.cloneNode(true);
-          c1.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;';
-          leftCol.appendChild(c1);
+          c1.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;flex:1;min-width:0;margin:0;';
+          topRow.appendChild(c1);
         }
+        wrap.appendChild(topRow);
+
+        // —— 行3：三栏 —— [趋势分析(历年图)] [分层+洞察] [热力图x2] ——
+        const contentRow = document.createElement('div');
+        contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
+        const leftCol = document.createElement('div');
+        leftCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        const midCol = document.createElement('div');
+        midCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
 
         const analysisEl = document.getElementById('analysisWrap');
         if (analysisEl && analysisEl.style.display !== 'none') {
@@ -955,18 +960,30 @@
           if (hInClone) hInClone.remove();
           const dInClone = c2.querySelector('#dayHeatWrap');
           if (dInClone) dInClone.remove();
+          // 先取出 nnPredictBox 引用（后面统一去 id）
+          const nn = c2.querySelector('#nnPredictBox');
           // 去掉克隆里的 id，避免与页面内重复
           c2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          leftCol.appendChild(c2);
+
+          // 拆分 c2：第1个 .info-table = 历年水平演进（放左栏）；grid 块 = 分层+洞察（放中栏）
+          const yearCard = c2.querySelector('.info-table');
+          const tierGrid = c2.querySelector('div[style*="grid-template-columns"]');
+          if (yearCard) leftCol.appendChild(yearCard);
+          if (tierGrid) midCol.appendChild(tierGrid);
+          // nnPredictBox（若有内容）放左栏历年图下方
+          if (nn) leftCol.appendChild(nn);
         }
         contentRow.appendChild(leftCol);
 
-        // —— 右栏：月度热力图 + 逐日热力图（620px 固定，上下排布）——
+        // —— 中栏：分层 + 洞察 ——
+        contentRow.appendChild(midCol);
+
+        // —— 右栏：月度热力图 + 逐日热力图（540px 固定，上下排布）——
         const heatSrc = document.getElementById('heatmapWrap');
         if (heatSrc && heatSrc.style.display !== 'none') {
           const h2 = heatSrc.cloneNode(true);
           h2.querySelectorAll('.hm-tip').forEach(el => el.remove()); // 富tooltip是悬停浮层，长图里不需要
-          h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:620px;flex-shrink:0;margin:0;';
+          h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:0;';
           h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(h2);
         }
@@ -974,10 +991,10 @@
         if (dayHeatSrc && dayHeatSrc.style.display !== 'none') {
           const d2 = dayHeatSrc.cloneNode(true);
           d2.querySelectorAll('.hm-tip').forEach(el => el.remove());
-          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:620px;flex-shrink:0;margin:14px 0 0;';
-          // 长图里把逐日格子放大到 13px 更易读（620-32-74-6=508 / 31 ≈ 13px + gap 3）
-          d2.querySelectorAll('.hd-cell').forEach(el => { el.style.width = '13px'; el.style.height = '13px'; });
-          d2.querySelectorAll('.hd-cells').forEach(el => { el.style.gridTemplateColumns = 'repeat(31, 13px)'; el.style.gap = '3px'; });
+          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:14px 0 0;';
+          // 长图里把逐日格子放大到 12px 更易读（540-32-74-6=428 / 31 ≈ 13px 含 gap）
+          d2.querySelectorAll('.hd-cell').forEach(el => { el.style.width = '12px'; el.style.height = '12px'; });
+          d2.querySelectorAll('.hd-cells').forEach(el => { el.style.gridTemplateColumns = 'repeat(31, 12px)'; el.style.gap = '1.5px'; });
           d2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(d2);
         }
