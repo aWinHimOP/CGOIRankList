@@ -985,14 +985,20 @@
           if (nn) leftCol.appendChild(nn);
         }
 
-        // —— 月度热力图：放趋势分析栏（左栏）底部 ——
+        // —— 月度热力图：放趋势分析栏（左栏）顶部，宽度=主分布图（左栏全宽），格子均分留白 ——
         const heatSrc = document.getElementById('heatmapWrap');
         if (heatSrc && heatSrc.style.display !== 'none') {
           const h2 = heatSrc.cloneNode(true);
           h2.querySelectorAll('.hm-tip').forEach(el => el.remove()); // 富tooltip是悬停浮层，长图里不需要
           h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:100%;margin:0;';
+          // 年份列均分整行宽度：格子随列宽拉伸，多出的空间留白拓展
+          h2.querySelectorAll('.hm-grid').forEach(el => { el.style.display = 'flex'; el.style.gap = '6px'; });
+          h2.querySelectorAll('.hm-yearcol').forEach(el => { el.style.flex = '1 1 0'; el.style.minWidth = '0'; });
+          h2.querySelectorAll('.hm-cells').forEach(el => { el.style.gridTemplateRows = 'repeat(12, 22px)'; el.style.gap = '4px'; });
+          h2.querySelectorAll('.hm-cell').forEach(el => { el.style.width = '100%'; el.style.height = '100%'; el.style.borderRadius = '4px'; });
+          h2.querySelectorAll('.hm-year').forEach(el => { el.style.fontSize = '12px'; el.style.textAlign = 'center'; });
           h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          leftCol.appendChild(h2);
+          leftCol.insertBefore(h2, leftCol.firstChild); // 插到最前（趋势分析上方）
         }
 
         // —— 逐日热力图：放右栏（540px 固定）——
