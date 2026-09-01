@@ -931,22 +931,35 @@
         }
         contentRow.appendChild(leftCol);
 
-        // —— 右栏：逐月全体水平（宽度=主分布图 1100px，无限往下单列显示）——
+        // —— 右栏：逐月全体水平（宽度=主分布图 1100px，按100行分列）——
         const monthlySrc = document.getElementById('monthlyWrap');
         if (monthlySrc && monthlySrc.style.display !== 'none') {
           const m2 = monthlySrc.cloneNode(true);
           m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:1100px;flex-shrink:0;margin:0;';
           const cols = m2.querySelector('.m-columns');
           if (cols) {
-            // 不分列：把所有 .m-col 的行合并平铺成单列，无限往下
+            // 页面内是单列平铺；长图里恢复按 100 行一列分栏（往右新开列）
             const allRows = [];
-            cols.querySelectorAll('.m-col').forEach(col => {
-              col.querySelectorAll('.m-row').forEach(row => allRows.push(row));
+            cols.querySelectorAll('.m-col .m-row, .m-row').forEach(row => allRows.push(row));
+            const uniq = Array.from(new Set(allRows)); // 去重（选择器可能双重命中）
+            cols.innerHTML = '';
+            cols.style.maxHeight = 'none';
+            cols.style.overflow = 'visible';
+            const PER_COL = 100;
+            let bucket = [];
+            const makeCol = () => {
+              const c = document.createElement('div');
+              c.className = 'm-col';
+              c.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:0 0 auto;min-width:1000px;';
+              bucket.forEach(row => c.appendChild(row));
+              cols.appendChild(c);
+              bucket = [];
+            };
+            uniq.forEach(row => {
+              bucket.push(row);
+              if (bucket.length === PER_COL) makeCol();
             });
-            const flat = document.createElement('div');
-            allRows.forEach(row => flat.appendChild(row));
-            flat.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
-            cols.replaceWith(flat);
+            if (bucket.length) makeCol();
           }
           m2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(m2);
@@ -1525,18 +1538,8 @@
         '</div>';
       });
 
-      // 每100行分一列（一列满员再往右新开一列）
-      const PER_COL = 100;
-      const colArr = [];
-      const cols = [];
-      for (let i = 0; i < rowHtmls.length; i++) {
-        colArr.push(rowHtmls[i]);
-        if (colArr.length === PER_COL || i === rowHtmls.length - 1) {
-          cols.push('<div class="m-col">' + colArr.join('') + '</div>');
-          colArr.length = 0;
-        }
-      }
-      grid.innerHTML = cols.join('');
+      // 单列无限往下延伸（页面内滚动区查看）
+      grid.innerHTML = '<div class="m-col">' + rowHtmls.join('') + '</div>';
     }
 
     function escapeHtmlAttr(s) {
