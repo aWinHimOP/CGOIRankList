@@ -212,6 +212,15 @@
       padding:7px 10px; border-radius:7px; white-space:nowrap; line-height:1.6;
       box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none;
     }
+    /* ===== 逐日活跃热力图 ===== */
+    .hd-row { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+    .hd-mlabel { width:74px; flex-shrink:0; font-size:9.5px; color:var(--muted); font-weight:600; white-space:nowrap; text-align:right; }
+    .hd-cells { display:grid; grid-template-columns:repeat(31, 9px); gap:2px; }
+    .hd-cell {
+      width:9px; height:9px; border-radius:2px; display:inline-block;
+      background:#eef0f6; cursor:default;
+    }
+    .hd-cell:hover { outline:1.5px solid var(--primary); outline-offset:1px; }
     @media (max-width: 600px) {
       .container { padding: 12px; }
       .controls { flex-direction: column; align-items: stretch; }
@@ -358,7 +367,7 @@
       </div>
 
       <!-- ===== 逐月活跃热力图 ===== -->
-      <div class="info-table" id="heatmapWrap" style="display:none;margin-top:12px;">
+      <div class="info-table" id="heatmapWrap" style="display:none;margin-top:12px;position:relative;">
         <h3 style="font-size:14px;">逐月活跃热力图 <span id="heatBasis" style="font-weight:400;font-size:11px;"></span></h3>
         <div style="font-size:10.5px;color:#8a93a8;margin-bottom:8px;line-height:1.8;">
           每个格子 = 一个月 · 颜色越深 = 该月纪录条数越多（相对峰值）· 悬停查看详情 · 左上角为年份
@@ -374,6 +383,26 @@
           <span class="hm-cell" style="background:#3b4bdb;"></span>
           <span>多</span>
           <span id="heatMaxLabel" style="margin-left:8px;"></span>
+        </div>
+      </div>
+
+      <!-- ===== 逐日活跃热力图 ===== -->
+      <div class="info-table" id="dayHeatWrap" style="display:none;margin-top:12px;">
+        <h3 style="font-size:14px;">逐日活跃热力图 <span id="dayBasis" style="font-weight:400;font-size:11px;"></span></h3>
+        <div style="font-size:10.5px;color:#8a93a8;margin-bottom:8px;line-height:1.8;">
+          每个格子 = 一天 · 一行 = 一个月份（左起第1天）· 颜色越深 = 当日纪录条数越多 · 悬停查看详情
+        </div>
+        <div id="dayHeatGrid" style="overflow-x:auto;"></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);margin-top:8px;">
+          <span>少</span>
+          <span class="hd-cell" style="background:#eef0f6;"></span>
+          <span class="hd-cell" style="background:#c7d2fe;"></span>
+          <span class="hd-cell" style="background:#a5b4fc;"></span>
+          <span class="hd-cell" style="background:#818cf8;"></span>
+          <span class="hd-cell" style="background:#5b6cff;"></span>
+          <span class="hd-cell" style="background:#3b4bdb;"></span>
+          <span>多</span>
+          <span id="dayMaxLabel" style="margin-left:8px;"></span>
         </div>
       </div>
     </div>
@@ -928,13 +957,22 @@
         }
         contentRow.appendChild(leftCol);
 
-        // —— 右栏：热力图（520px 固定）——
+        // —— 右栏：月度热力图 + 逐日热力图（520px 固定，上下排布）——
         const heatSrc = document.getElementById('heatmapWrap');
         if (heatSrc && heatSrc.style.display !== 'none') {
           const h2 = heatSrc.cloneNode(true);
+          h2.querySelectorAll('.hm-tip').forEach(el => el.remove()); // 富tooltip是悬停浮层，长图里不需要
           h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:520px;flex-shrink:0;margin:0;';
           h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(h2);
+        }
+        const dayHeatSrc = document.getElementById('dayHeatWrap');
+        if (dayHeatSrc && dayHeatSrc.style.display !== 'none') {
+          const d2 = dayHeatSrc.cloneNode(true);
+          d2.querySelectorAll('.hm-tip').forEach(el => el.remove());
+          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:520px;flex-shrink:0;margin:14px 0 0;';
+          d2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          contentRow.appendChild(d2);
         }
         wrap.appendChild(contentRow);
 
@@ -1594,10 +1632,16 @@
       });
       html += '</div>';
       grid.innerHTML = html;
+    }
 
-      // 原生 title 已够用；附加跟随鼠标的富 tooltip（含该月最快成绩）
+    // 月度热力图富 tooltip：只初始化一次（避免 updateChart 反复执行时累积重复元素与监听器）
+    (function initHeatTip() {
+      const panel = document.getElementById('heatmapWrap');
+      const grid = document.getElementById('heatGrid');
       const tip = document.createElement('div');
       tip.className = 'hm-tip';
+      tip.style.display = 'none';
+      panel.style.position = 'relative';
       panel.appendChild(tip);
       grid.addEventListener('mousemove', e => {
         const cell = e.target.closest('.hm-cell');
@@ -1616,7 +1660,96 @@
         tip.style.top = y + 'px';
       });
       grid.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    })();
+
+    // ==================== 逐日活跃热力图 ====================
+    function buildDailyHeat(times) {
+      const byDay = new Map();   // 'YYYY-MM-DD' -> count
+      times.forEach(t => {
+        const m = String(t.date || '').match(/^(20\d{2}|19\d{2})[-/.年](\d{1,2})[-/.月]\D?(\d{1,2})/);
+        if (!m) return;
+        const key = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0') + '-' + String(parseInt(m[3], 10)).padStart(2, '0');
+        byDay.set(key, (byDay.get(key) || 0) + 1);
+      });
+      if (!byDay.size) return { months: [], counts: byDay, peak: 0 };
+      const keys = Array.from(byDay.keys()).sort();
+      const y0 = keys[0].slice(0, 7), y1 = keys[keys.length - 1].slice(0, 7);
+      // 从最早月份铺到最新月份
+      const months = [];
+      let [cy, cm] = y0.split('-').map(Number);
+      const [ey, em] = y1.split('-').map(Number);
+      while (cy < ey || (cy === ey && cm <= em)) {
+        months.push(cy + '-' + String(cm).padStart(2, '0'));
+        cm++; if (cm > 12) { cm = 1; cy++; }
+      }
+      let peak = 0;
+      byDay.forEach(v => { if (v > peak) peak = v; });
+      return { months, counts: byDay, peak };
     }
+
+    function renderDailyHeat(heat) {
+      const panel = document.getElementById('dayHeatWrap');
+      const grid = document.getElementById('dayHeatGrid');
+      if (!heat.months.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
+      panel.style.display = '';
+
+      const years = Array.from(new Set(heat.months.map(m => m.slice(0, 4))));
+      document.getElementById('dayBasis').textContent =
+        '（' + years[0] + (years.length > 1 ? ' → ' + years[years.length - 1] : '') + ' 年 · ' +
+        heat.months.length + ' 个月 · 峰值日 ' + heat.peak + ' 条）';
+      document.getElementById('dayMaxLabel').textContent = '峰值 ' + heat.peak + ' 条/日';
+
+      const MONTH_CN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      const levelOf = n => n <= 0 ? 0 : Math.min(5, Math.ceil(n / heat.peak * 5));
+      const daysIn = (y, m) => new Date(y, m, 0).getDate();
+
+      let html = '';
+      heat.months.forEach(ym => {
+        const [y, mo] = ym.split('-').map(Number);
+        const dim = daysIn(y, mo);
+        html += '<div class="hd-row"><span class="hd-mlabel">' + y + ' ' + MONTH_CN[mo-1] + '</span><span class="hd-cells">';
+        for (let d = 1; d <= 31; d++) {
+          if (d > dim) { html += '<span class="hd-cell" style="background:transparent;"></span>'; continue; }
+          const key = ym + '-' + String(d).padStart(2, '0');
+          const n = heat.counts.get(key) || 0;
+          const lv = levelOf(n);
+          html += '<span class="hd-cell" data-day="' + key + '" data-n="' + n + '" style="background:' + HEAT_LEVELS[lv] + ';"' +
+            ' title="' + y + '年' + mo + '月' + d + '日：' + n + ' 条"></span>';
+        }
+        html += '</span></div>';
+      });
+      grid.innerHTML = html;
+    }
+
+    // 逐日热力图富 tooltip：同样只初始化一次
+    (function initDayHeatTip() {
+      const panel = document.getElementById('dayHeatWrap');
+      const grid = document.getElementById('dayHeatGrid');
+      const tip = document.createElement('div');
+      tip.className = 'hm-tip';
+      tip.style.display = 'none';
+      panel.style.position = 'relative';
+      panel.appendChild(tip);
+      grid.addEventListener('mousemove', e => {
+        const cell = e.target.closest('.hd-cell');
+        if (!cell || !cell.dataset.day) { tip.style.display = 'none'; return; }
+        const key = cell.dataset.day, n = cell.dataset.n;
+        const fastest = window.__hdFastest && window.__hdFastest.get(key);
+        const p = key.split('-'); // [y, m, d]
+        tip.innerHTML = '<b>' + p[0] + '年' + parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日</b>' +
+          ' · ' + n + ' 条' +
+          (fastest ? '<br>最快：' + escapeHtmlAttr(formatSecondsMinOnly(fastest)) : '');
+        tip.style.display = 'block';
+        const pr = panel.getBoundingClientRect();
+        const cr = cell.getBoundingClientRect();
+        let x = cr.left - pr.left + cr.width / 2 - 70;
+        let y = cr.top - pr.top - 44;
+        if (y < 0) y = cr.bottom - pr.top + 8;
+        tip.style.left = Math.max(0, x) + 'px';
+        tip.style.top = y + 'px';
+      });
+      grid.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    })();
 
     const __origUpdateChart = updateChart;
     updateChart = function () {
@@ -1644,6 +1777,19 @@
         });
         window.__hmFastest = fastByMonth;
         renderHeatmap(heat);
+
+        // 逐日热力图（含每日最快成绩 tooltip 数据）
+        const dayHeat = buildDailyHeat(times);
+        const fastByDay = new Map();
+        times.forEach(t => {
+          const m = String(t.date || '').match(/^(20\d{2}|19\d{2})[-/.年](\d{1,2})[-/.月]\D?(\d{1,2})/);
+          if (!m) return;
+          const key = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0') + '-' + String(parseInt(m[3], 10)).padStart(2, '0');
+          const prev = fastByDay.get(key);
+          if (prev === undefined || t.seconds < prev) fastByDay.set(key, t.seconds);
+        });
+        window.__hdFastest = fastByDay;
+        renderDailyHeat(dayHeat);
         document.getElementById('yearTrendBasis').textContent =
           '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议') + '）';
         document.getElementById('monthBasis').textContent =
