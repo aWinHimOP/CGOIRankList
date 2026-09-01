@@ -877,11 +877,13 @@
       loadH2C(() => {
         btn.disabled = true;
         btn.textContent = '生成中...';
+        const CONTENT_W = 1600; // 内容总宽
         const wrap = document.createElement('div');
-        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:2240px;';
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:' + (CONTENT_W + 40) + 'px;';
         const title = document.createElement('div');
-        title.style.cssText = 'font-size:20px;font-weight:800;color:#1f2533;';
-        title.textContent = '数据分析 · CGOI';
+        title.style.cssText = 'display:flex;align-items:baseline;justify-content:space-between;';
+        title.innerHTML = '<span style="font-size:22px;font-weight:800;color:#1f2533;">数据分析 · CGOI</span>' +
+          '<span style="font-size:12px;color:#8a93a8;">' + escapeHtmlAttr(document.getElementById('heatBasis').textContent || '') + '</span>';
         wrap.appendChild(title);
 
         // —— 1. 主分布图（canvas → img）——
@@ -893,9 +895,9 @@
 
         // —— 2/3. 左栏（主图宽度的统计+趋势分析）+ 右栏（同宽的逐月水平）——
         const contentRow = document.createElement('div');
-        contentRow.style.cssText = 'display:flex;gap:20px;align-items:flex-start;width:100%;';
+        contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
         const leftCol = document.createElement('div');
-        leftCol.style.cssText = 'flex:0 0 1100px;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        leftCol.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;';
 
         const statEl = document.querySelector('.container .info-table');
         if (statEl) {
@@ -917,40 +919,48 @@
             yimg.style.cssText = 'width:100%;display:block;';
             dstYear.replaceWith(yimg);
           }
-          // 逐月面板从分析块中移出（长图里放右边）
+          // 逐月面板从分析块中移出（长图里单独放全宽卡片）
           const mInClone = c2.querySelector('#monthlyWrap');
           if (mInClone) mInClone.remove();
-          // 解除列区限高让 html2canvas 捕获全部行（滚动裁剪坑）
-          c2.querySelectorAll('.m-columns').forEach(el => {
-            el.style.maxHeight = 'none';
-            el.style.overflow = 'visible';
-          });
           // 去掉克隆里的 id，避免与页面内重复
           c2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           leftCol.appendChild(c2);
         }
         contentRow.appendChild(leftCol);
 
-        // —— 右栏：逐月全体水平（宽度=主分布图 1100px，按100行分列）——
+        // —— 右栏：热力图（520px 固定）——
+        const heatSrc = document.getElementById('heatmapWrap');
+        if (heatSrc && heatSrc.style.display !== 'none') {
+          const h2 = heatSrc.cloneNode(true);
+          h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:520px;flex-shrink:0;margin:0;';
+          h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          contentRow.appendChild(h2);
+        }
+        wrap.appendChild(contentRow);
+
+        // —— 逐月全体水平：全宽卡片，按 100 行分列，每列等宽并排 ——
         const monthlySrc = document.getElementById('monthlyWrap');
         if (monthlySrc && monthlySrc.style.display !== 'none') {
           const m2 = monthlySrc.cloneNode(true);
-          m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:1100px;flex-shrink:0;margin:0;';
+          m2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:100%;margin:0;';
           const cols = m2.querySelector('.m-columns');
           if (cols) {
-            // 页面内是单列平铺；长图里恢复按 100 行一列分栏（往右新开列）
             const allRows = [];
-            cols.querySelectorAll('.m-col .m-row, .m-row').forEach(row => allRows.push(row));
-            const uniq = Array.from(new Set(allRows)); // 去重（选择器可能双重命中）
+            cols.querySelectorAll('.m-row').forEach(row => allRows.push(row));
+            const uniq = Array.from(new Set(allRows));
             cols.innerHTML = '';
             cols.style.maxHeight = 'none';
             cols.style.overflow = 'visible';
+            cols.style.display = 'flex';
+            cols.style.gap = '20px';
+            cols.style.alignItems = 'flex-start';
+            cols.style.flexWrap = 'wrap'; // 列太多时换行，绝不横向溢出
             const PER_COL = 100;
             let bucket = [];
             const makeCol = () => {
               const c = document.createElement('div');
               c.className = 'm-col';
-              c.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:0 0 auto;min-width:1000px;';
+              c.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;min-width:480px;';
               bucket.forEach(row => c.appendChild(row));
               cols.appendChild(c);
               bucket = [];
@@ -962,24 +972,13 @@
             if (bucket.length) makeCol();
           }
           m2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          contentRow.appendChild(m2);
-
-          // 热力图也放右栏（逐月面板下方）
-          const heatSrc = document.getElementById('heatmapWrap');
-          if (heatSrc && heatSrc.style.display !== 'none') {
-            const h2 = heatSrc.cloneNode(true);
-            h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:1100px;flex-shrink:0;margin:12px 0 0;';
-            h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-            contentRow.appendChild(h2);
-          }
+          wrap.appendChild(m2);
         }
-
-        wrap.appendChild(contentRow);
 
         // —— 4. 底部水印行 ——
         const foot = document.createElement('div');
         foot.style.cssText = 'font-size:10px;color:#8a93a8;text-align:center;';
-        foot.textContent = '生成于 ' + new Date().toLocaleString('zh-CN') + ' · localhost:8080';
+        foot.textContent = '生成于 ' + new Date().toLocaleString('zh-CN') + ' · CGOI 数据分析';
         wrap.appendChild(foot);
 
         document.body.appendChild(wrap);
