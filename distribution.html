@@ -932,7 +932,7 @@
         }
         wrap.appendChild(topRow);
 
-        // —— 行3：月度热力图（1120px，=主分布图宽） + 逐日热力图（540px）——
+        // —— 行3+4：左区 1120px（月度热力图 → 历年演进 | 分层洞察）+ 右区（逐日热力图 540px 竖向贯通）——
         const contentRow = document.createElement('div');
         contentRow.style.cssText = 'display:flex;gap:14px;align-items:flex-start;width:100%;';
         const monthlyBox = document.createElement('div');
@@ -987,6 +987,7 @@
         }
         row4.appendChild(leftCol);
         row4.appendChild(midCol);
+        monthlyBox.appendChild(row4); // 历年演进 + 分层洞察 放月度热力图下方
 
         // —— 月度热力图：放趋势分析栏（左栏）顶部，宽度=主分布图（左栏全宽），格子均分留白 ——
         const heatSrc = document.getElementById('heatmapWrap');
@@ -1017,14 +1018,14 @@
         }
         contentRow.appendChild(monthlyBox);
 
-        // —— 逐日热力图：放右栏（540px 固定）——
+        // —— 逐日热力图：放右栏（540px 固定，高度撑满与左区等高）——
         const rightCol = document.createElement('div');
         rightCol.style.cssText = 'flex:0 0 540px;min-width:0;display:flex;flex-direction:column;gap:14px;';
         const dayHeatSrc = document.getElementById('dayHeatWrap');
         if (dayHeatSrc && dayHeatSrc.style.display !== 'none') {
           const d2 = dayHeatSrc.cloneNode(true);
           d2.querySelectorAll('.hm-tip').forEach(el => el.remove());
-          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:0;';
+          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;';
           // 逐日格子 12px 适配右栏宽（540-32-74-6=428 / 31 ≈ 13px 含 gap）
           d2.querySelectorAll('.hd-cell').forEach(el => { el.style.width = '12px'; el.style.height = '12px'; });
           d2.querySelectorAll('.hd-cells').forEach(el => { el.style.gridTemplateColumns = 'repeat(31, 12px)'; el.style.gap = '1.5px'; });
@@ -1033,7 +1034,6 @@
         }
         contentRow.appendChild(rightCol);
         wrap.appendChild(contentRow);
-        wrap.appendChild(row4);
 
         // —— 逐月全体水平：全宽卡片，按 100 行分列，每列等宽并排 ——
         const monthlySrc = document.getElementById('monthlyWrap');
