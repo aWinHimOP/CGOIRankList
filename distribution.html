@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="favicon.png">
-  <title>通关时间分布 - CGOI</title>
+  <title>数据分析 - CGOI</title>
   <style>
     :root {
       --bg: #f5f6fb;
@@ -193,12 +193,33 @@
     .m-vals { color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
     .m-med { color:var(--muted); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
     .m-cnt { color:var(--muted); text-align:right; white-space:nowrap; }
+    /* ===== 逐月活跃热力图 ===== */
+    .hm-grid { display:flex; gap:4px; }
+    .hm-yearcol { display:flex; flex-direction:column; gap:3px; }
+    .hm-year {
+      font-size:10px; font-weight:700; color:var(--muted); height:16px;
+      white-space:nowrap; text-align:center;
+    }
+    .hm-cells { display:grid; grid-template-rows:repeat(12, 15px); gap:3px; }
+    .hm-cell {
+      width:15px; height:15px; border-radius:3px; display:inline-block;
+      background:#eef0f6; cursor:default; position:relative;
+    }
+    .hm-cell:hover { outline:2px solid var(--primary); outline-offset:1px; z-index:5; }
+    .hm-tip {
+      display:none; position:absolute; pointer-events:none; z-index:20;
+      background:rgba(31,37,51,.94); color:#fff; font-size:11.5px;
+      padding:7px 10px; border-radius:7px; white-space:nowrap; line-height:1.6;
+      box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none;
+    }
     @media (max-width: 600px) {
       .container { padding: 12px; }
       .controls { flex-direction: column; align-items: stretch; }
       .self-input { flex-direction: column; align-items: stretch; }
       .m-row { grid-template-columns:70px 1fr 84px; }
       .m-med, .m-cnt { display:none; }
+      .hm-cell { width:12px; height:12px; }
+      .hm-cells { grid-template-rows:repeat(12, 12px); }
     }
   </style>
 </head>
@@ -206,7 +227,7 @@
   <div class="header">
     <div class="header-inner">
       <div>
-        <h1>通关时间分布</h1>
+        <h1>数据分析</h1>
       </div>
       <div class="nav-menu">
         <button class="nav-btn" id="navBtn" title="导航菜单">
@@ -215,7 +236,7 @@
         <div class="nav-dropdown" id="navDropdown">
           <a href="index.html">主榜</a>
           <a href="cr.html">历届 CR</a>
-          <a href="distribution.html" class="active">时间分布</a>
+          <a href="distribution.html" class="active">数据分析</a>
         </div>
       </div>
     </div>
@@ -334,6 +355,26 @@
           </div>
         </div>
         <div id="monthColumns" class="m-columns"></div>
+      </div>
+
+      <!-- ===== 逐月活跃热力图 ===== -->
+      <div class="info-table" id="heatmapWrap" style="display:none;margin-top:12px;">
+        <h3 style="font-size:14px;">逐月活跃热力图 <span id="heatBasis" style="font-weight:400;font-size:11px;"></span></h3>
+        <div style="font-size:10.5px;color:#8a93a8;margin-bottom:8px;line-height:1.8;">
+          每个格子 = 一个月 · 颜色越深 = 该月纪录条数越多（相对峰值）· 悬停查看详情 · 左上角为年份
+        </div>
+        <div id="heatGrid" style="overflow-x:auto;"></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);margin-top:8px;">
+          <span>少</span>
+          <span class="hm-cell" style="background:#eef0f6;"></span>
+          <span class="hm-cell" style="background:#c7d2fe;"></span>
+          <span class="hm-cell" style="background:#a5b4fc;"></span>
+          <span class="hm-cell" style="background:#818cf8;"></span>
+          <span class="hm-cell" style="background:#5b6cff;"></span>
+          <span class="hm-cell" style="background:#3b4bdb;"></span>
+          <span>多</span>
+          <span id="heatMaxLabel" style="margin-left:8px;"></span>
+        </div>
       </div>
     </div>
 
@@ -840,7 +881,7 @@
         wrap.style.cssText = 'position:fixed;left:-9999px;top:0;padding:20px;background:#f5f6fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;display:flex;flex-direction:column;gap:14px;width:2240px;';
         const title = document.createElement('div');
         title.style.cssText = 'font-size:20px;font-weight:800;color:#1f2533;';
-        title.textContent = '通关时间分布 · CGOI';
+        title.textContent = '数据分析 · CGOI';
         wrap.appendChild(title);
 
         // —— 1. 主分布图（canvas → img）——
@@ -904,6 +945,15 @@
           m2.querySelectorAll('.m-col').forEach(el => { el.style.minWidth = '1000px'; el.style.flex = '0 0 auto'; });
           m2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
           contentRow.appendChild(m2);
+
+          // 热力图也放右栏（逐月面板下方）
+          const heatSrc = document.getElementById('heatmapWrap');
+          if (heatSrc && heatSrc.style.display !== 'none') {
+            const h2 = heatSrc.cloneNode(true);
+            h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:1100px;flex-shrink:0;margin:12px 0 0;';
+            h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            contentRow.appendChild(h2);
+          }
         }
 
         wrap.appendChild(contentRow);
@@ -1489,6 +1539,78 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // ==================== 逐月活跃热力图 ====================
+    const HEAT_LEVELS = ['#eef0f6', '#c7d2fe', '#a5b4fc', '#818cf8', '#5b6cff', '#3b4bdb']; // 0-5 级
+
+    function buildHeatmap(times) {
+      const byMonth = new Map();
+      times.forEach(t => {
+        const m = String(t.date || '').match(/^(20\d{2}|19\d{2})[-/.年](\d{1,2})/);
+        if (!m) return;
+        const ym = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0');
+        byMonth.set(ym, (byMonth.get(ym) || 0) + 1);
+      });
+      if (!byMonth.size) return { years: [], counts: new Map(), peak: 0 };
+      const yms = Array.from(byMonth.keys()).sort();
+      const y0 = parseInt(yms[0].slice(0, 4), 10), y1 = parseInt(yms[yms.length - 1].slice(0, 4), 10);
+      const years = [];
+      for (let y = y0; y <= y1; y++) years.push(y);
+      return { years, counts: byMonth, peak: Math.max(...byMonth.values()) };
+    }
+
+    function renderHeatmap(heat) {
+      const panel = document.getElementById('heatmapWrap');
+      const grid = document.getElementById('heatGrid');
+      if (!heat.years.length) { panel.style.display = 'none'; grid.innerHTML = ''; return; }
+      panel.style.display = '';
+
+      document.getElementById('heatBasis').textContent =
+        '（' + heat.years[0] + ' 年 ' + (heat.years[0] === heat.years[heat.years.length - 1] ? '' : '→ ') +
+        (heat.years.length > 1 ? heat.years[heat.years.length - 1] + ' 年' : '') +
+        ' · 峰值月份 ' + heat.peak + ' 条）';
+      document.getElementById('heatMaxLabel').textContent = '峰值 ' + heat.peak + ' 条/月';
+
+      const MONTH_CN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      const levelOf = n => n <= 0 ? 0 : Math.min(5, Math.ceil(n / heat.peak * 5));
+
+      let html = '<div class="hm-grid">';
+      heat.years.forEach(y => {
+        html += '<div class="hm-yearcol"><div class="hm-year">' + y + '</div><div class="hm-cells">';
+        for (let mo = 1; mo <= 12; mo++) {
+          const ym = y + '-' + String(mo).padStart(2, '0');
+          const n = heat.counts.get(ym) || 0;
+          const lv = levelOf(n);
+          html += '<span class="hm-cell" data-ym="' + ym + '" data-n="' + n + '" data-lv="' + lv + '" style="background:' + HEAT_LEVELS[lv] + ';"' +
+            (n ? ' title="' + y + '年' + MONTH_CN[mo-1] + '：' + n + ' 条"' : ' title="' + y + '年' + MONTH_CN[mo-1] + '：无纪录"') + '></span>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+      grid.innerHTML = html;
+
+      // 原生 title 已够用；附加跟随鼠标的富 tooltip（含该月最快成绩）
+      const tip = document.createElement('div');
+      tip.className = 'hm-tip';
+      panel.appendChild(tip);
+      grid.addEventListener('mousemove', e => {
+        const cell = e.target.closest('.hm-cell');
+        if (!cell) { tip.style.display = 'none'; return; }
+        const ym = cell.dataset.ym, n = cell.dataset.n;
+        const fastest = window.__hmFastest && window.__hmFastest.get(ym);
+        tip.innerHTML = '<b>' + ym.replace('-', '年 ') + '月</b> · ' + n + ' 条' +
+          (fastest ? '<br>最快：' + escapeHtmlAttr(formatSecondsMinOnly(fastest)) : '');
+        tip.style.display = 'block';
+        const pr = panel.getBoundingClientRect();
+        const cr = cell.getBoundingClientRect();
+        let x = cr.left - pr.left + cr.width / 2 - 60;
+        let y = cr.top - pr.top - 44;
+        if (y < 0) y = cr.bottom - pr.top + 8;
+        tip.style.left = Math.max(0, x) + 'px';
+        tip.style.top = y + 'px';
+      });
+      grid.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    }
+
     const __origUpdateChart = updateChart;
     updateChart = function () {
       const r = __origUpdateChart.apply(this, arguments);
@@ -1502,6 +1624,19 @@
         renderTiers(times);
         renderInsights(times, ym);
         renderMonthly(buildMonthly(times));
+
+        // 热力图（含每月最快成绩 tooltip 数据）
+        const heat = buildHeatmap(times);
+        const fastByMonth = new Map();
+        times.forEach(t => {
+          const m = String(t.date || '').match(/^(20\d{2}|19\d{2})[-/.年](\d{1,2})/);
+          if (!m) return;
+          const key = m[1] + '-' + String(parseInt(m[2], 10)).padStart(2, '0');
+          const prev = fastByMonth.get(key);
+          if (prev === undefined || t.seconds < prev) fastByMonth.set(key, t.seconds);
+        });
+        window.__hmFastest = fastByMonth;
+        renderHeatmap(heat);
         document.getElementById('yearTrendBasis').textContent =
           '（口径：' + (bestOnly ? '每人最佳' : '全部纪录') + (showContested ? ' · 含争议' : ' · 不含争议') + '）';
         document.getElementById('monthBasis').textContent =
