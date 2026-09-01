@@ -985,28 +985,29 @@
           if (nn) leftCol.appendChild(nn);
         }
 
-        // —— 逐日热力图：放趋势分析栏（左栏）底部 ——
-        const dayHeatSrc = document.getElementById('dayHeatWrap');
-        if (dayHeatSrc && dayHeatSrc.style.display !== 'none') {
-          const d2 = dayHeatSrc.cloneNode(true);
-          d2.querySelectorAll('.hm-tip').forEach(el => el.remove());
-          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:100%;margin:0;';
-          // 逐日格子 11px 适配左栏宽（左栏约 553px：553-32-74-6=441 / 31 ≈ 12px 含 gap）
-          d2.querySelectorAll('.hd-cell').forEach(el => { el.style.width = '11px'; el.style.height = '11px'; });
-          d2.querySelectorAll('.hd-cells').forEach(el => { el.style.gridTemplateColumns = 'repeat(31, 11px)'; el.style.gap = '2px'; });
-          d2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          leftCol.appendChild(d2);
-        }
-        // —— 右栏：月度热力图（540px 固定）——
-        const rightCol = document.createElement('div');
-        rightCol.style.cssText = 'flex:0 0 540px;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        // —— 月度热力图：放趋势分析栏（左栏）底部 ——
         const heatSrc = document.getElementById('heatmapWrap');
         if (heatSrc && heatSrc.style.display !== 'none') {
           const h2 = heatSrc.cloneNode(true);
           h2.querySelectorAll('.hm-tip').forEach(el => el.remove()); // 富tooltip是悬停浮层，长图里不需要
-          h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:0;';
+          h2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:100%;margin:0;';
           h2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
-          rightCol.appendChild(h2);
+          leftCol.appendChild(h2);
+        }
+
+        // —— 逐日热力图：放右栏（540px 固定）——
+        const rightCol = document.createElement('div');
+        rightCol.style.cssText = 'flex:0 0 540px;min-width:0;display:flex;flex-direction:column;gap:14px;';
+        const dayHeatSrc = document.getElementById('dayHeatWrap');
+        if (dayHeatSrc && dayHeatSrc.style.display !== 'none') {
+          const d2 = dayHeatSrc.cloneNode(true);
+          d2.querySelectorAll('.hm-tip').forEach(el => el.remove());
+          d2.style.cssText = 'background:#fff;border:1px solid #e8eaf1;border-radius:10px;padding:14px 16px;width:540px;flex-shrink:0;margin:0;';
+          // 逐日格子 12px 适配右栏宽（540-32-74-6=428 / 31 ≈ 13px 含 gap）
+          d2.querySelectorAll('.hd-cell').forEach(el => { el.style.width = '12px'; el.style.height = '12px'; });
+          d2.querySelectorAll('.hd-cells').forEach(el => { el.style.gridTemplateColumns = 'repeat(31, 12px)'; el.style.gap = '1.5px'; });
+          d2.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+          rightCol.appendChild(d2);
         }
         contentRow.appendChild(rightCol);
         wrap.appendChild(contentRow);
