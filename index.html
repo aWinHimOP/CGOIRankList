@@ -573,7 +573,9 @@
 
       <div class="search-container">
         <select class="search-field" id="searchField" aria-label="搜索字段">
+          <option value="all">全字段搜索</option>
           <option value="player">玩家名</option>
+          <option value="alias">曾用名</option>
           <option value="source">来源</option>
           <option value="homepage">主页</option>
           <option value="date">发布时间</option>
@@ -584,7 +586,7 @@
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.35-4.35"/>
           </svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="输入关键词搜索...">
+          <input type="text" class="search-input" id="searchInput" placeholder="输入关键词，搜索玩家名 / 曾用名 / 时间 / 日期 / 链接...">
         </div>
       </div>
       <div class="toolbar-actions">
@@ -612,7 +614,7 @@
     let allData = [];
     let currentPlatform = 'all';
     let currentSearch = '';
-    let currentField = 'player';
+    let currentField = 'all';
     let currentSort = 'default';
     let playerRanks = {};
 
@@ -752,6 +754,23 @@
       } else if (currentPlatform !== 'all') {
         filtered = filtered.filter(i => i.platform === currentPlatform);
       }
+      // 搜索筛选：在去重之前执行，保证曾用名 / 日期 / 链接等命中非最佳成绩时也能搜到
+      if (currentSearch) {
+        const q = currentSearch.toLowerCase().trim();
+        const SEARCH_FIELDS = ['player', 'alias', 'time', 'date', 'source', 'homepage'];
+        // 平台中文/英文别名，便于「全字段搜索」直接搜“安卓”“移动端”
+        const platText = p => p === 'Android' ? 'android 安卓 移动端 mobile'
+          : p === 'iOS' ? 'ios 苹果 移动端 mobile'
+          : p === 'PC' ? 'pc 电脑 桌面端' : '';
+        filtered = filtered.filter(i => {
+          if (currentField === 'all') {
+            if (SEARCH_FIELDS.some(f => (i[f] || '').toString().toLowerCase().includes(q))) return true;
+            return platText(i.platform).includes(q);
+          }
+          return (i[currentField] || '').toString().toLowerCase().includes(q);
+        });
+      }
+
       // 去重：同一个玩家只保留最好成绩，全部/PC/移动端均去重（用预解析的 _sec/_key）
       {
         const best = {};
@@ -761,14 +780,6 @@
           }
         });
         filtered = Object.values(best);
-      }
-
-      if (currentSearch) {
-        const q = currentSearch.toLowerCase().trim();
-        filtered = filtered.filter(i => {
-          const v = (i[currentField] || '').toString().toLowerCase();
-          return v.includes(q);
-        });
       }
 
       // 排序逻辑（用预解析的 _sec）
@@ -1010,7 +1021,9 @@
       currentField = e.target.value;
       const input = document.getElementById('searchInput');
       const labels = {
+        all: '输入关键词，搜索玩家名 / 曾用名 / 时间 / 日期 / 链接...',
         player: '输入玩家名...',
+        alias: '输入曾用名...',
         source: '输入来源链接关键词...',
         homepage: '输入主页链接关键词...',
         date: '输入发布时间，如 2024-01...',
