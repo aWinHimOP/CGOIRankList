@@ -30,3 +30,4 @@ android-app/
 
 # ===== 本地推送脚本（不上传）=====
 push_github.ps1
+上传到GitHub.bat
