@@ -18,12 +18,18 @@ serve.ps1
 # ===== AI 配置（含 API Key，绝不上传）=====
 ai_config.json
 
-# ===== 自动备份目录 =====
+# ===== 本地数据层（SQLite 主库 + 状态快照，仅本地使用）=====
+# 发布产物 data.json / cr_history.json 由 db 生成后另行上传，数据库本身不上传。
+db/
+
+# ===== 旧的全量备份目录（历史已导入 db/，保留目录忽略规则以防再次堆积）=====
 backups/
 
 # ===== 本地开发杂项 =====
 *.log
 *.tmp
+server.log
+server.err.log
 
 # Android project (local only)
 android-app/
@@ -31,3 +37,7 @@ android-app/
 # ===== 本地推送脚本（不上传）=====
 push_github.ps1
 上传到GitHub.bat
+上传数据到GitHub.bat
+
+# ===== 本地数据层文档（不上传）=====
+数据层说明.md
