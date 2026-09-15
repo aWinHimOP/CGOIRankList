@@ -13367,6 +13367,294 @@
     ]
   },
   {
+    "player": "SHY-LCB",
+    "homepage": "https://space.bilibili.com/297483789",
+    "records": [
+      {
+        "time": "1m39.327s",
+        "platform": "PC",
+        "date": "2020-12-25 20:36",
+        "source": "https://www.bilibili.com/opus/472709842974660346"
+      },
+      {
+        "time": "2m11.933s",
+        "platform": "PC",
+        "date": "2020-9-6 15:20",
+        "source": "https://www.bilibili.com/opus/431809260254236202"
+      },
+      {
+        "time": "2m18.175s",
+        "platform": "PC",
+        "date": "2020-9-5 17:17",
+        "source": "https://www.bilibili.com/opus/431468248439710574"
+      },
+      {
+        "time": "2m38.417s",
+        "platform": "PC",
+        "date": "2020-8-31 17:52",
+        "source": "https://www.bilibili.com/opus/429622000913308570"
+      },
+      {
+        "time": "2m46.239s",
+        "platform": "PC",
+        "date": "2020-8-28 17:26",
+        "source": "https://www.bilibili.com/opus/428501465425758488"
+      },
+      {
+        "time": "3m08.749s",
+        "platform": "PC",
+        "date": "2020-8-28 14:19",
+        "source": "https://www.bilibili.com/opus/428453744039667748"
+      },
+      {
+        "time": "3m51.118s",
+        "platform": "PC",
+        "date": "2020-8-28 13:46",
+        "source": "https://www.bilibili.com/opus/428445355969534646"
+      },
+      {
+        "time": "4m16.021s",
+        "platform": "PC",
+        "date": "2020-8-28 10:34",
+        "source": "https://www.bilibili.com/opus/428395538641488868"
+      },
+      {
+        "time": "4m17.562s",
+        "platform": "PC",
+        "date": "2020-8-28 10:31",
+        "source": "https://www.bilibili.com/opus/428394284515227249"
+      },
+      {
+        "time": "12m29.484s",
+        "platform": "PC",
+        "date": "2020-8-4 10:56",
+        "source": "https://www.bilibili.com/opus/419494412199208934"
+      },
+      {
+        "time": "21m59.677s",
+        "platform": "PC",
+        "date": "2020-7-30 11:38",
+        "source": "https://www.bilibili.com/opus/417650333630069349"
+      },
+      {
+        "time": "1m13.893s",
+        "platform": "Android",
+        "date": "2024-8-9 12:41",
+        "source": "Modpack群"
+      },
+      {
+        "time": "1m14.200s",
+        "platform": "Android",
+        "date": "2023-2-7 15:58",
+        "source": "https://www.bilibili.com/opus/759858450235654195"
+      },
+      {
+        "time": "1m14.730s",
+        "platform": "Android",
+        "date": "2023-08-15 19:37",
+        "source": "https://www.bilibili.com/video/BV1R84y1f7Tc"
+      },
+      {
+        "time": "1m14.736s",
+        "platform": "Android",
+        "date": "2023-08-07 15:44",
+        "source": "https://www.bilibili.com/video/BV1FV4y1v73i"
+      },
+      {
+        "time": "1m15.906s",
+        "platform": "Android",
+        "date": "2023-12-09 23:24",
+        "source": "https://www.bilibili.com/video/BV17C4y1X7Eh"
+      },
+      {
+        "time": "1m15.953s",
+        "platform": "Android",
+        "date": "2023-08-15 19:28",
+        "source": "https://www.bilibili.com/video/BV18u4y1q7my"
+      },
+      {
+        "time": "1m16.341s",
+        "platform": "Android",
+        "date": "2023-08-15 19:31",
+        "source": "https://www.bilibili.com/video/BV19G411Z7U3"
+      },
+      {
+        "time": "1m16.802s",
+        "platform": "Android",
+        "date": "2023-1-12 19:08",
+        "source": "https://www.bilibili.com/video/BV14N4y187X8"
+      },
+      {
+        "time": "1m16.820s",
+        "platform": "Android",
+        "date": "2023-08-17 13:44",
+        "source": "https://www.bilibili.com/video/BV16r4y1Z7CH"
+      },
+      {
+        "time": "1m17.170s",
+        "platform": "Android",
+        "date": "2023-08-15 17:57",
+        "source": "https://www.bilibili.com/video/BV118411X7NH"
+      },
+      {
+        "time": "1m17.288s",
+        "platform": "Android",
+        "date": "2023-12-21 21:31",
+        "source": "https://www.bilibili.com/video/BV1fK411b7ro"
+      },
+      {
+        "time": "1m17.615s",
+        "platform": "Android",
+        "date": "2024-3-10 14:58",
+        "source": "https://www.bilibili.com/video/BV1jJ4m1a7JL"
+      },
+      {
+        "time": "1m17.792s",
+        "platform": "Android",
+        "date": "2022-12-11 13:48",
+        "source": "https://www.bilibili.com/opus/738301863290470482"
+      },
+      {
+        "time": "1m18.668s",
+        "platform": "Android",
+        "date": "2025-1-19 20:25",
+        "source": "https://www.bilibili.com/video/BV1Jdw6eyEoM"
+      },
+      {
+        "time": "1m18.854s",
+        "platform": "Android",
+        "date": "2022-11-5 13:24",
+        "source": "https://www.bilibili.com/opus/724936754007638033"
+      },
+      {
+        "time": "1m18.889s",
+        "platform": "Android",
+        "date": "2022-8-18 14:23",
+        "source": "https://www.bilibili.com/video/BV1Se4y1f7Yv"
+      },
+      {
+        "time": "1m19.582s",
+        "platform": "Android",
+        "date": "2023-09-30 19:17",
+        "source": "https://www.bilibili.com/video/BV18H4y1U7dV"
+      },
+      {
+        "time": "1m19.892s",
+        "platform": "Android",
+        "date": "2025-2-22 15:37",
+        "source": "https://www.bilibili.com/video/BV175PNeCEAu"
+      },
+      {
+        "time": "1m20.432s",
+        "platform": "Android",
+        "date": "2023-09-30 19:16",
+        "source": "https://www.bilibili.com/video/BV18841117dd"
+      },
+      {
+        "time": "1m21.063s",
+        "platform": "Android",
+        "date": "2022-7-15 13:26",
+        "source": "https://www.bilibili.com/opus/683004511612043289"
+      },
+      {
+        "time": "1m21.274s",
+        "platform": "Android",
+        "date": "2025-2-24 18:07",
+        "source": "https://www.bilibili.com/video/BV1odPxeNEhk"
+      },
+      {
+        "time": "1m21.537s",
+        "platform": "Android",
+        "date": "2025-3-1 15:16",
+        "source": "https://www.bilibili.com/video/BV1zHXDYLEpt"
+      },
+      {
+        "time": "1m21.804s",
+        "platform": "Android",
+        "date": "2022-6-27 13:19",
+        "source": "https://www.bilibili.com/opus/676323213263765574"
+      },
+      {
+        "time": "1m21.910s",
+        "platform": "Android",
+        "date": "2025-5-3 15:33",
+        "source": "https://www.bilibili.com/video/BV1u7VHztEfR"
+      },
+      {
+        "time": "1m22.209s",
+        "platform": "Android",
+        "date": "2024-6-1 15:51",
+        "source": "https://www.bilibili.com/video/BV1zi421U7Qt"
+      },
+      {
+        "time": "1m23.416s",
+        "platform": "Android",
+        "date": "2022-5-7 16:00",
+        "source": "https://www.bilibili.com/opus/657439298378792992"
+      },
+      {
+        "time": "1m24.366s",
+        "platform": "Android",
+        "date": "2024-12-28 22:24",
+        "source": "https://www.bilibili.com/video/BV1j66WYKEt9"
+      },
+      {
+        "time": "1m25.079s",
+        "platform": "Android",
+        "date": "2022-4-21 16:20",
+        "source": "https://www.bilibili.com/opus/651507106728378386"
+      },
+      {
+        "time": "1m27.165s",
+        "platform": "Android",
+        "date": "2024-5-26 21:01",
+        "source": "https://www.bilibili.com/video/BV1vb421v7pw"
+      },
+      {
+        "time": "1m27.628s",
+        "platform": "Android",
+        "date": "2022-4-14 16:32",
+        "source": "https://www.bilibili.com/opus/648912749149028355"
+      },
+      {
+        "time": "1m27.766s",
+        "platform": "Android",
+        "date": "2022-4-17 14:12",
+        "source": "https://www.bilibili.com/opus/649989871090270241"
+      },
+      {
+        "time": "1m33.379s",
+        "platform": "Android",
+        "date": "2022-5-16 10:36",
+        "source": "https://www.bilibili.com/opus/660695760008904711"
+      },
+      {
+        "time": "1m39.580s",
+        "platform": "Android",
+        "date": "2021-1-20 16:51",
+        "source": "https://www.bilibili.com/opus/482300320267656966"
+      },
+      {
+        "time": "1m46.741s",
+        "platform": "Android",
+        "date": "2023-01-12 21:48",
+        "source": "https://www.bilibili.com/video/BV1kR4y1278o"
+      },
+      {
+        "time": "1m53.389s",
+        "platform": "Android",
+        "date": "2022-4-29 18:30",
+        "source": "https://www.bilibili.com/opus/654509413413945380"
+      },
+      {
+        "time": "3m18.789s",
+        "platform": "Android",
+        "date": "2020-8-8 14:17",
+        "source": "https://www.bilibili.com/opus/421031576697851394"
+      }
+    ]
+  },
+  {
     "player": "也许会有希望呢",
     "homepage": "https://space.bilibili.com/488836186",
     "records": [
@@ -14770,90 +15058,6 @@
         "date": "2017-11-23",
         "source": "https://www.bilibili.com/video/BV1GJ411p7aq",
         "alias": "White55开解说"
-      }
-    ]
-  },
-  {
-    "player": "SHY-LCB",
-    "homepage": "https://space.bilibili.com/297483789",
-    "records": [
-      {
-        "time": "1m13.893s",
-        "platform": "Android",
-        "date": "2024-8-9 12:41",
-        "source": "Modpack群"
-      },
-      {
-        "time": "1m14.730s",
-        "platform": "Android",
-        "date": "2023-08-15 19:37",
-        "source": "https://www.bilibili.com/video/BV1R84y1f7Tc"
-      },
-      {
-        "time": "1m14.736s",
-        "platform": "Android",
-        "date": "2023-08-07 15:44",
-        "source": "https://www.bilibili.com/video/BV1FV4y1v73i"
-      },
-      {
-        "time": "1m15.906s",
-        "platform": "Android",
-        "date": "2023-12-09 23:24",
-        "source": "https://www.bilibili.com/video/BV17C4y1X7Eh"
-      },
-      {
-        "time": "1m15.953s",
-        "platform": "Android",
-        "date": "2023-08-15 19:28",
-        "source": "https://www.bilibili.com/video/BV18u4y1q7my"
-      },
-      {
-        "time": "1m16.341s",
-        "platform": "Android",
-        "date": "2023-08-15 19:31",
-        "source": "https://www.bilibili.com/video/BV19G411Z7U3"
-      },
-      {
-        "time": "1m16.802s",
-        "platform": "Android",
-        "date": "2023-12-21 21:31",
-        "source": "https://www.bilibili.com/video/BV14N4y187X8"
-      },
-      {
-        "time": "1m16.820s",
-        "platform": "Android",
-        "date": "2023-08-17 13:44",
-        "source": "https://www.bilibili.com/video/BV16r4y1Z7CH"
-      },
-      {
-        "time": "1m17.170s",
-        "platform": "Android",
-        "date": "2023-08-15 17:57",
-        "source": "https://www.bilibili.com/video/BV118411X7NH"
-      },
-      {
-        "time": "1m17.288s",
-        "platform": "Android",
-        "date": "2023-12-21 21:31",
-        "source": "https://www.bilibili.com/video/BV1fK411b7ro"
-      },
-      {
-        "time": "1m19.582s",
-        "platform": "Android",
-        "date": "2023-09-30 19:17",
-        "source": "https://www.bilibili.com/video/BV18H4y1U7dV"
-      },
-      {
-        "time": "1m20.432s",
-        "platform": "Android",
-        "date": "2023-09-30 19:16",
-        "source": "https://www.bilibili.com/video/BV18841117dd"
-      },
-      {
-        "time": "1m46.741s",
-        "platform": "Android",
-        "date": "2023-01-12 21:48",
-        "source": "https://www.bilibili.com/video/BV1kR4y1278o"
       }
     ]
   },
