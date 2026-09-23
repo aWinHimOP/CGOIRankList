@@ -650,20 +650,23 @@
       }
       .toolbar-actions-wrap.open .edition-toggle input { width: 14px; height: 14px; }
 
-      /* 「更多」按钮原本自己占一整行（33px + 8px 间距全浪费）。
-         把它塞到排序下拉右边，并让排序下拉吃掉剩余宽度：
-         第 2 行 = 排序 + 更多，第 3 行 = 搜索框，省下整整一行。 */
-      /* 排序下拉 + 「更多」并排占一行；搜索框单独占下一行。
-         注意 .search-container 在 820px 断点里已经是 min-width:100%，
-         所以它必然独占一行，剩下的空间正好给排序和「更多」。 */
-      /* 用 order 明确排布，避免 flex-wrap 在 min-width:100% 元素处产生意外换行：
-           第 1 行 平台筛选 / 第 2 行 排序 + 更多 / 第 3 行 搜索 / 第 4 行 展开的控件 */
+      /* 移动端工具栏排布（只挪位置，控件本身不动）：
+           第 1 行  平台筛选
+           第 2 行  排序（排名筛选）+ 搜索字段（搜索筛选）+ 「更多」
+           第 3 行  搜索输入框（独占一整行）
+           展开「更多」后再占一行：显示特殊版本 / 生成长图 / 提交纪录
+         .search-container 拆成 display:contents，好让里面的「搜索字段」
+         和输入框各自参与工具栏排列——否则它带着 min-width:100% 独占一行，
+         排序和「更多」只能零散换行。 */
       html.js-ready .toolbar-content { align-items: center; }
-      html.js-ready .filter-group         { order: 1; }
-      html.js-ready #sortField            { order: 2; flex: 1 1 auto; min-width: 0; width: auto; }
-      html.js-ready .mobile-more-btn      { order: 3; flex: 0 0 auto; }
-      html.js-ready .search-container     { order: 4; }
-      html.js-ready .toolbar-actions-wrap { order: 5; }
+      html.js-ready .filter-group     { order: 1; flex: 1 1 100%; }
+      html.js-ready #sortField        { order: 2; flex: 1 1 auto; min-width: 0; width: auto; }
+      html.js-ready #searchField      { order: 3; flex: 0 0 auto; }
+      html.js-ready .mobile-more-btn  { order: 4; flex: 0 0 auto; }
+      html.js-ready .search-input-wrap { order: 5; flex: 1 1 100%; }
+      html.js-ready .toolbar-actions-wrap { order: 6; }
+      /* 只影响移动端：把搜索容器拆开，桌面端（>820px）保持原样 */
+      .search-container { display: contents; }
 
       /* 说明区在窄屏会堆到 160px 以上。缩小字号行距，
          并挤掉上下那 18px / 14px 的外边距——那正是看着"多出来一块空白"的来源。
@@ -1074,22 +1077,28 @@
         '<span style="font-size:13px;color:var(--muted);font-weight:500;">' + formatDate(new Date()) + '</span>';
       wrapper.appendChild(header);
 
-      // 提示
-      const tip = document.createElement('div');
-      tip.style.cssText = 'font-size:12px;color:#856404;padding:8px 12px;background:#fef3cd;border:1px solid #ffc107;border-radius:8px;width:fit-content;';
-      tip.textContent = '通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认';
-      wrapper.appendChild(tip);
+      // 提示：两条都用和主榜一致的黄色圆角框，字号小一点，上下堆叠。
+      // 长图会脱离网页单独传播，标记含义和特殊版本口径都必须印在图上。
+      const notices = document.createElement('div');
+      notices.style.cssText = 'display:flex;flex-direction:column;gap:6px;align-items:flex-start;max-width:820px;';
+      const BOX = 'font-size:11px;line-height:1.5;color:#856404;padding:6px 11px;' +
+        'background:#fef3cd;border:1px solid #ffc107;border-radius:8px;width:fit-content;';
 
-      // 特殊版本说明 + 当前是否包含（长图会脱离页面单独保存，
-      // 不写清楚的话看的人不知道里面有没有特殊版本成绩）
+      const tip = document.createElement('div');
+      tip.style.cssText = BOX;
+      tip.textContent = '通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认';
+      notices.appendChild(tip);
+
       const ed = document.createElement('div');
-      ed.style.cssText = 'font-size:12px;color:#6b7280;line-height:1.6;max-width:760px;';
+      ed.style.cssText = BOX;
       ed.innerHTML = '<strong style="color:#b45309;">特殊版本</strong>指移动端里非 Benett Foddy 或 Noodlecake 制作的版本，' +
-        '例如抖音版、TapTap 版，或移动端 1.9.4 之后的版本（不含 1.9.4）。<br>' +
+        '例如抖音版、TapTap 版，或移动端 1.9.4 之后的版本（不含 1.9.4）。' +
         (showSpecialEdition
-          ? '本图<strong style="color:#b45309;">包含</strong>特殊版本成绩。'
-          : '本图<strong>仅含原版</strong>成绩，已屏蔽特殊版本。');
-      wrapper.appendChild(ed);
+          ? ' 本图<strong style="color:#b45309;">包含</strong>特殊版本成绩。'
+          : ' 本图<strong>仅含原版</strong>成绩，已屏蔽特殊版本。');
+      notices.appendChild(ed);
+
+      wrapper.appendChild(notices);
 
       // 列容器
       const columnsRow = document.createElement('div');
