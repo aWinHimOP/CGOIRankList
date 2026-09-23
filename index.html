@@ -150,8 +150,10 @@
       box-shadow: var(--shadow);
     }
 
-    /* PC 端：包裹层不产生额外的盒，子元素直接参与工具栏 flex 布局。
-       （移动端会在下面的媒体查询里把它变成真正的 flex 容器） */
+    /* 移动端「更多」按钮：PC 端隐藏 */
+    .mobile-more-btn { display: none; }
+
+    /* PC 端：包裹层不产生额外的盒，子元素直接参与工具栏 flex 布局 */
     .toolbar-actions-wrap {
       display: contents;
     }
@@ -569,104 +571,103 @@
       .search-input { padding: 8px 12px 8px 36px; font-size: 13px; }
       .container { padding: 14px 14px 40px; }
 
-      /* ===== 移动端工具栏：压到两行 =====
-         原来要 4 行（筛选 / 排序 / 搜索 / 按钮组），往下翻成绩时可视区很小。
-         现在：
-           第 1 行  平台筛选
-           第 2 行  排序 + 搜索 + 「显示特殊版本 / 生成长图 / 提交纪录」
-         三个操作控件不折叠、直接摆出来——它们是常用入口，藏起来反而多一次点击。 */
-      .toolbar-content { align-items: center; gap: 6px; }
+      /* ===== 移动端：顶部只保留必要控件，其余收进「更多」 =====
+         手机上工具栏换行后会堆到 5~6 行，往下翻成绩时可视区域被压得很小。
+         这里把「显示特殊版本 / 生成长图 / 提交纪录」收成一行按钮，
+         点开才展开；往下滚动时还会自动收起。 */
+      html.js-ready .mobile-more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 7px 12px;
+        border: none;
+        border-radius: 10px;
+        background: #eef0f6;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all .2s;
+      }
+      .mobile-more-btn svg { transition: transform .2s; }
+      .mobile-more-btn[aria-expanded="true"] {
+        background: #fff;
+        color: var(--primary);
+        box-shadow: var(--shadow);
+      }
+      .mobile-more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
 
-      /* 第一行：平台筛选（横向可滑）+ 搜索字段选择器 */
-      .filter-group {
-        order: 1;
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+      /* 默认展开：万一 JS 没执行，这几个控件仍然可用（不会点了没反应）。
+         JS 跑起来后会给 <html> 加 .js-ready，这时才允许折叠。 */
+      .toolbar-actions-wrap {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
       }
-      #searchField {
-        order: 1;
-        flex: 0 0 auto;
-        max-width: 88px;
-        padding: 6px 8px;
-        font-size: 11.5px;
-      }
-
-      /* 第二行：排序 + 搜索框 + 三个操作控件，全部挤在一行。
-         宽度预算（390px 屏，可用 366px）：
-           排序 96 + 搜索字段 0（已并入输入框的占位符提示） + 输入框 ~120 + 控件组 ~145 = 361 */
-      #sortField {
-        order: 2;
-        flex: 0 0 auto;
-        width: auto;
-        max-width: 96px;
-        padding: 8px 8px;
-      }
-      .search-container {
-        order: 3;
-        flex: 1 1 60px;
-        min-width: 60px;       /* 覆盖 820px 断点里的 min-width:100%，否则它会独占一行 */
+      html.js-ready .toolbar-actions-wrap { display: none; }
+      html.js-ready .toolbar-actions-wrap.open { display: flex; }
+      /* JS 没跑时「更多」按钮没有意义，藏掉 */
+      .mobile-more-btn { display: none; }
+      html.js-ready .mobile-more-btn { display: inline-flex; }
+      /* 展开后三个控件排在**同一行**：显示特殊版本 / 生成长图 / 提交纪录。
+         它们是一组同类操作，拆成两行会白白多占一行高度。
+         空间不够时才允许换行（flex-wrap 在父级上已开启）。 */
+      .toolbar-actions-wrap.open {
+        flex-wrap: nowrap;
         gap: 6px;
       }
-      /* 搜索字段选择器挪到第一行去（和平台筛选同排），第二行留给输入框和按钮 */
-      #searchField { order: 0; }
-      .search-input-wrap { flex: 1 1 auto; min-width: 0; }
-
-      .toolbar-actions-wrap {
-        order: 4;
-        display: flex;
-        flex: 1 1 auto;      /* 允许收缩；独占一行时又能撑满，右边不留空白 */
-        min-width: 0;
-        gap: 5px;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .toolbar-actions {
-        display: flex;
-        flex: 1 1 auto;
-        min-width: 0;
-        gap: 5px;
-        align-items: center;
-      }
-      /* 三个控件均分所在行的剩余宽度，避免右侧留下一块空白。
-         390px 屏：它们和第二行其他元素同排，各自按内容宽度显示。
-         360px 屏：它们独占一行，此时撑满整行，右边不留空。 */
-      html { --row-fill: 0; }
-      .toolbar-actions-wrap { justify-content: space-between; }
-
-      /* 三个操作控件压缩到极限，保证和第二行其他元素同排。
-         360px 小屏空间最紧，所以下限给得很小，靠 flex 分配。 */
-      .edition-toggle {
-        padding: 6px 7px;
-        font-size: 11px;
-        gap: 4px;
+      .toolbar-actions-wrap.open .edition-toggle {
         flex: 0 1 auto;
         min-width: 0;
+        white-space: nowrap;
       }
-      .edition-toggle input { width: 13px; height: 13px; flex: 0 0 auto; }
-      .edition-toggle span {
+      .toolbar-actions-wrap.open .edition-toggle span {
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
       }
-      .generate-img-btn, .submit-btn {
-        padding: 6px 7px;
-        font-size: 11px;
+      .toolbar-actions-wrap.open .toolbar-actions {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 6px;
+        align-items: center;
+      }
+      .toolbar-actions-wrap.open .generate-img-btn,
+      .toolbar-actions-wrap.open .submit-btn {
+        flex: 0 0 auto;
         white-space: nowrap;
-        flex: 0 1 auto;
-        min-width: 0;
         text-align: center;
+        justify-content: center;
       }
-      .edition-toggle { justify-content: center; }
-      .filter-btn { padding: 6px 11px; font-size: 12.5px; }
-      .search-field { padding: 8px 10px; font-size: 12.5px; }
-      .search-input { padding: 8px 10px 8px 32px; font-size: 12.5px; }
-      .search-icon { left: 10px; }
-      .toolbar { padding: 8px 12px; }
+      /* 三个控件都缩一号，保证一行放得下 */
+      .toolbar-actions-wrap.open .edition-toggle,
+      .toolbar-actions-wrap.open .generate-img-btn,
+      .toolbar-actions-wrap.open .submit-btn {
+        padding: 7px 10px;
+        font-size: 12.5px;
+      }
+      .toolbar-actions-wrap.open .edition-toggle input { width: 14px; height: 14px; }
+
+      /* 「更多」按钮原本自己占一整行（33px + 8px 间距全浪费）。
+         把它塞到排序下拉右边，并让排序下拉吃掉剩余宽度：
+         第 2 行 = 排序 + 更多，第 3 行 = 搜索框，省下整整一行。 */
+      /* 排序下拉 + 「更多」并排占一行；搜索框单独占下一行。
+         注意 .search-container 在 820px 断点里已经是 min-width:100%，
+         所以它必然独占一行，剩下的空间正好给排序和「更多」。 */
+      /* 用 order 明确排布，避免 flex-wrap 在 min-width:100% 元素处产生意外换行：
+           第 1 行 平台筛选 / 第 2 行 排序 + 更多 / 第 3 行 搜索 / 第 4 行 展开的控件 */
+      html.js-ready .toolbar-content { align-items: center; }
+      html.js-ready .filter-group         { order: 1; }
+      html.js-ready #sortField            { order: 2; flex: 1 1 auto; min-width: 0; width: auto; }
+      html.js-ready .mobile-more-btn      { order: 3; flex: 0 0 auto; }
+      html.js-ready .search-container     { order: 4; }
+      html.js-ready .toolbar-actions-wrap { order: 5; }
 
       /* 说明区在窄屏会堆到 160px 以上。缩小字号行距，
-         并挤掉上下那 18px / 14px 的外边距——那正是看着"多出来一块空白"的来源。 */
+         并挤掉上下那 18px / 14px 的外边距——那正是看着"多出来一块空白"的来源。
+         注意：黄色标识是重要提示，**不折叠、不截断**，只是把字缩小。 */
       .notice-wrap {
         padding: 0 14px;
         margin: 8px 0 0;
@@ -677,7 +678,6 @@
         padding: 6px 10px;
         border-radius: 8px;
       }
-      /* 说明条：只缩小字号，不折叠——这条是重要提示，不能被藏起来 */
       .notice-edition {
         margin-top: 4px;
         font-size: 11px;
@@ -730,6 +730,12 @@
         <option value="date_asc">发布时间 (早→晚)</option>
         <option value="date_desc">发布时间 (晚→早)</option>
       </select>
+
+      <button type="button" class="mobile-more-btn" id="mobileMoreBtn"
+              aria-expanded="false" aria-controls="toolbarActionsWrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        <span>更多</span>
+      </button>
 
       <div class="search-container">
         <select class="search-field" id="searchField" aria-label="搜索字段">
@@ -1229,6 +1235,37 @@
       showSpecialEdition = e.target.checked;
       render();
     });
+
+    // ===== 移动端：顶部操作栏折叠 =====
+    (function setupMobileToolbar() {
+      // 先声明"JS 可用"，折叠逻辑才生效；否则移动端保持默认展开
+      document.documentElement.classList.add('js-ready');
+      const btn = document.getElementById('mobileMoreBtn');
+      const wrap = document.getElementById('toolbarActionsWrap');
+      if (!btn || !wrap) return;
+      const isMobile = () => window.matchMedia('(max-width: 820px)').matches;
+
+      function setOpen(open) {
+        wrap.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.querySelector('span').textContent = open ? '收起' : '更多';
+      }
+
+      btn.addEventListener('click', () => setOpen(!wrap.classList.contains('open')));
+
+      // 往下滚时自动收起，把顶部空间还给成绩列表。
+      // 只在移动端、且已经展开时才动作；向上滚或滚回顶部不动它。
+      let lastY = window.scrollY;
+      window.addEventListener('scroll', () => {
+        if (!isMobile()) return;
+        const y = window.scrollY;
+        if (y > lastY && y > 60 && wrap.classList.contains('open')) setOpen(false);
+        lastY = y;
+      }, { passive: true });
+
+      // 窗口从窄变宽（或旋转屏幕）时恢复成 PC 行为，避免留下展开态
+      window.addEventListener('resize', () => { if (!isMobile()) setOpen(false); });
+    })();
 
     // 搜索输入
     let searchTimer = null;
