@@ -659,10 +659,15 @@
          和输入框各自参与工具栏排列——否则它带着 min-width:100% 独占一行，
          排序和「更多」只能零散换行。 */
       html.js-ready .toolbar-content { align-items: center; }
-      html.js-ready .filter-group     { order: 1; flex: 1 1 100%; }
+      /* 平台筛选按内容宽度靠左，不撑满整行。
+         它后面的元素需要强制换行，所以给「排序行」的每个成员加一个
+         不可见的 100% 占位——用 flex-basis:100% 的伪元素实现不可行，
+         改成让排序自己带 flex-basis:100%（下面单独处理）。 */
+      html.js-ready .filter-group     { order: 1; flex: 0 0 auto; }
       html.js-ready #sortField        { order: 2; flex: 1 1 auto; min-width: 0; width: auto; }
       html.js-ready #searchField      { order: 3; flex: 0 0 auto; }
       html.js-ready .mobile-more-btn  { order: 4; flex: 0 0 auto; }
+      /* 搜入框独占一整行 */
       html.js-ready .search-input-wrap { order: 5; flex: 1 1 100%; }
       html.js-ready .toolbar-actions-wrap { order: 6; }
       /* 只影响移动端：把搜索容器拆开，桌面端（>820px）保持原样 */
