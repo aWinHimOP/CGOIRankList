@@ -120,6 +120,45 @@
       box-shadow: var(--shadow);
     }
 
+    /* 「显示特殊版本」勾选框 */
+    .edition-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: #eef0f6;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+    .edition-toggle:hover { color: var(--text); }
+    .edition-toggle input {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+      accent-color: var(--primary);
+      margin: 0;
+    }
+    .edition-toggle:has(input:checked) {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    /* 特殊版本说明条：和上一条提示略有区分 */
+    .notice-edition {
+      margin-top: 6px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #6b7280;
+    }
+    .notice-edition strong { color: #b45309; }
+
     .search-field {
       padding: 10px 14px;
       border: 1px solid var(--border);
@@ -589,6 +628,11 @@
           <input type="text" class="search-input" id="searchInput" placeholder="输入关键词，搜索玩家名 / 曾用名 / 时间 / 日期 / 链接...">
         </div>
       </div>
+      <label class="edition-toggle" title="特殊版本指移动端里非 Benett Foddy 或 Noodlecake 制作的版本">
+        <input type="checkbox" id="showSpecialEdition">
+        <span>显示特殊版本</span>
+      </label>
+
       <div class="toolbar-actions">
         <button class="generate-img-btn" onclick="generateLongImage()">生成长图</button>
         <a class="submit-btn" href="https://www.bilibili.com/opus/1063135015717568564" target="_blank" rel="noopener">提交纪录</a>
@@ -596,7 +640,10 @@
     </div>
   </div>
 
-   <div class="notice-wrap"><div class="notice">通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认</div></div>
+   <div class="notice-wrap">
+     <div class="notice">通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认</div>
+     <div class="notice notice-edition"><strong>特殊版本</strong>指移动端里非 Benett Foddy 或 Noodlecake 制作的版本，例如抖音版、TapTap 版，或移动端 1.9.4 之后的版本（不含 1.9.4）。主榜默认屏蔽特殊版本。</div>
+   </div>
 
   <div class="container">
     <div class="stats" id="stats"></div>
@@ -612,6 +659,7 @@
 
   <script>
     let allData = [];
+    let showSpecialEdition = false;   // 默认屏蔽特殊版本
     let currentPlatform = 'all';
     let currentSearch = '';
     let currentField = 'all';
@@ -753,6 +801,10 @@
         filtered = filtered.filter(i => i.platform === 'Android' || i.platform === 'iOS');
       } else if (currentPlatform !== 'all') {
         filtered = filtered.filter(i => i.platform === currentPlatform);
+      }
+      // 默认屏蔽特殊版本，勾选后才显示（没有 edition 键即原版）
+      if (!showSpecialEdition) {
+        filtered = filtered.filter(i => i.edition !== 'special');
       }
       // 搜索筛选：在去重之前执行，保证曾用名 / 日期 / 链接等命中非最佳成绩时也能搜到
       if (currentSearch) {
@@ -896,6 +948,17 @@
       tip.textContent = '通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认';
       wrapper.appendChild(tip);
 
+      // 特殊版本说明 + 当前是否包含（长图会脱离页面单独保存，
+      // 不写清楚的话看的人不知道里面有没有特殊版本成绩）
+      const ed = document.createElement('div');
+      ed.style.cssText = 'font-size:12px;color:#6b7280;line-height:1.6;max-width:760px;';
+      ed.innerHTML = '<strong style="color:#b45309;">特殊版本</strong>指移动端里非 Benett Foddy 或 Noodlecake 制作的版本，' +
+        '例如抖音版、TapTap 版，或移动端 1.9.4 之后的版本（不含 1.9.4）。<br>' +
+        (showSpecialEdition
+          ? '本图<strong style="color:#b45309;">包含</strong>特殊版本成绩。'
+          : '本图<strong>仅含原版</strong>成绩，已屏蔽特殊版本。');
+      wrapper.appendChild(ed);
+
       // 列容器
       const columnsRow = document.createElement('div');
       columnsRow.style.cssText = 'display:inline-flex;gap:20px;align-items:flex-start;';
@@ -954,8 +1017,10 @@
         return Object.values(best).sort((a, b) => a._sec - b._sec);
       }
 
-      const pcItems = dedupBest(allData.filter(i => i.platform === 'PC'));
-      const mobileItems = dedupBest(allData.filter(i => i.platform === 'Android' || i.platform === 'iOS'));
+      // 长图跟随页面当前的「显示特殊版本」设置，勾了才把特殊版本算进去
+      const base = showSpecialEdition ? allData : allData.filter(i => i.edition !== 'special');
+      const pcItems = dedupBest(base.filter(i => i.platform === 'PC'));
+      const mobileItems = dedupBest(base.filter(i => i.platform === 'Android' || i.platform === 'iOS'));
 
       if (pcItems.length === 0 && mobileItems.length === 0) { alert('暂无数据'); return; }
 
@@ -1033,6 +1098,12 @@
       render();
     });
 
+    // 「显示特殊版本」勾选框
+    document.getElementById('showSpecialEdition').addEventListener('change', e => {
+      showSpecialEdition = e.target.checked;
+      render();
+    });
+
     // 搜索输入
     let searchTimer = null;
     document.getElementById('searchInput').addEventListener('input', e => {
@@ -1055,7 +1126,7 @@
         const flat = [];
         data.forEach(group => {
           (group.records || []).forEach(rec => {
-            flat.push(addMeta({
+            const item = {
               player: group.player,
               homepage: group.homepage,
               time: rec.time,
@@ -1063,7 +1134,10 @@
               date: rec.date,
               source: rec.source,
               alias: rec.alias
-            }));
+            };
+            // 只有特殊版本才有这个键；没有就是原版
+            if (rec.edition === 'special') item.edition = 'special';
+            flat.push(addMeta(item));
           });
         });
         return flat;
