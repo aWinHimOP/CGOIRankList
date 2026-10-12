@@ -384,6 +384,11 @@
     .player-rank-row .pr-item { white-space: nowrap; }
     .player-rank-row .pr-val { color: #999; }
 
+    /* 用时 / 平台 / 日期 的包装层。默认 display:contents —— 不产生盒子，
+       DOM 结构对布局完全透明，竖屏和桌面端渲染与没有它时一模一样。
+       手机横屏时才变成右侧那个固定两行的信息块。 */
+    .row-tail { display: contents; }
+
     .links {
       display: flex;
       flex-direction: column;
@@ -891,15 +896,29 @@
         align-items: baseline;
         gap: 0 6px;
       }
-      .main-panel .time { order: 3; flex: 0 0 auto; font-size: 14px; white-space: nowrap; }
-      .main-panel .meta {
-        order: 4;
+      /* 右侧信息块：固定两行，宽度基本恒定，怎么挤都不会变形
+           第一行  用时 + 平台
+           第二行  提交日期（右对齐）
+         .meta 设为 display:contents，让里面的「平台」和「日期」各自
+         成为这一网格的项，才能把日期单独放到第二行。 */
+      .main-panel .row-tail {
+        order: 3;
         flex: 0 0 auto;
-        flex-direction: row;
-        align-items: center;
-        gap: 6px;
-        min-width: 0;
+        margin-left: auto;          /* 整块靠右 */
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-areas:
+          "time badge"
+          "date date";
+        justify-items: end;
+        align-items: baseline;
+        column-gap: 6px;
+        row-gap: 1px;
       }
+      .main-panel .time { grid-area: time; font-size: 14px; white-space: nowrap; }
+      .main-panel .meta { display: contents; }
+      .main-panel .platform-badge { grid-area: badge; }
+      .main-panel .date { grid-area: date; font-size: 10.5px; white-space: nowrap; }
       /* 单行放不下「来源/主页」，横屏先隐藏——点玩家名进去仍能看到全部来源 */
       .main-panel .links       { display: none; }
       .main-panel .time-label  { display: none; }
@@ -944,7 +963,7 @@
       .main-panel .player-alias { font-size: 10px; }
       .main-panel .player-rank-row { font-size: 9.5px; }
       .main-panel .time { font-size: 12.5px; }
-      .main-panel .date { font-size: 10px; }
+      .main-panel .date { font-size: 9.5px; }
       .main-panel .platform-badge { font-size: 9.5px; padding: 1px 5px; }
 
       .filter-btn { padding: 4px 5px; font-size: 10px; }
@@ -1300,13 +1319,15 @@
               ${item.source ? `<div class="link-row"><span class="link-label">来源</span>${renderLink(item.source)}</div>` : ''}
               ${item.homepage ? `<div class="link-row"><span class="link-label">主页</span>${renderHomepages(item.homepage)}</div>` : ''}
             </div>
-            <div class="meta">
-              <span class="platform-badge ${pClass}">${escapeHtml(pText)}</span>
-              <span class="date">${escapeHtml(item.date || '')}</span>
-            </div>
-            <div class="time">
-              ${escapeHtml(item.time)}
-              <span class="time-label">通关时间</span>
+            <div class="row-tail">
+              <div class="meta">
+                <span class="platform-badge ${pClass}">${escapeHtml(pText)}</span>
+                <span class="date">${escapeHtml(item.date || '')}</span>
+              </div>
+              <div class="time">
+                ${escapeHtml(item.time)}
+                <span class="time-label">通关时间</span>
+              </div>
             </div>
           </div>
         `;
