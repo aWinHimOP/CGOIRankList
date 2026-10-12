@@ -830,10 +830,13 @@
       }
       .notice-edition { margin-top: 4px; font-size: 9.5px; }
 
-      /* ---------- 右栏：排行榜 ---------- */
+      /* ---------- 右栏：排行榜 ----------
+         这里必须是块级容器，不能是 flex 列。
+         用 flex 列时列表（几千行）会被压扁到视口高度，
+         footer 被顶在视口底部、列表内容却溢出到它下面，
+         结果 footer 永远被压在列表底下还会随滚动飘走。 */
       .main-panel {
-        display: flex;
-        flex-direction: column;
+        display: block;
         flex: 1 1 auto;
         min-width: 0;
         height: 100vh;
@@ -844,9 +847,14 @@
       .container {
         padding: 8px 10px 20px;
         max-width: none;
-        min-height: 0;
       }
-      .footer { padding: 10px; font-size: 11px; gap: 10px; }
+      /* 底部留够空间，别贴着屏幕边缘（手机底部还有手势条/工具栏） */
+      .footer {
+        padding: 14px 10px calc(18px + env(safe-area-inset-bottom, 0px));
+        font-size: 11px;
+        gap: 10px;
+        max-width: none;
+      }
 
       /* ---------- 右栏的成绩行：压成单行紧凑布局 ----------
          桌面版网格最小要 490px（含 220px 的「来源/主页」列），
