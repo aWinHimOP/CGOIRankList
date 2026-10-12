@@ -733,7 +733,7 @@
         flex-direction: column;
         flex: 0 0 34%;
         width: 34%;
-        min-width: 190px;
+        min-width: 124px;        /* 窄屏时允许收得更小，把宽度让给榜单 */
         max-width: 300px;
         height: 100vh;
         height: 100dvh;
@@ -750,7 +750,16 @@
         padding: 8px 12px;
         flex: 0 0 auto;
       }
-      .header h1 { font-size: 16px; letter-spacing: 0; white-space: nowrap; }
+      /* 标题不许换行；空间不够时用省略号收尾，
+         否则它会把右边的导航按钮挤出左栏（极窄时会溢出 2px）。 */
+      .header h1 {
+        font-size: 16px;
+        letter-spacing: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
       .header-content { gap: 8px; }
       .nav-btn { width: 30px; height: 30px; flex: 0 0 auto; }
 
@@ -901,6 +910,48 @@
       .main-panel .date { font-size: 10.5px; }
 
       .stats { gap: 8px; font-size: 11.5px; margin-bottom: 8px; }
+    }
+
+    /* ============================================================
+       窄屏横屏第一档（≤760px）：左栏按比例收窄，把宽度让给榜单
+       ============================================================ */
+    @media (orientation: landscape) and (max-height: 520px) and (max-width: 760px) {
+      .side-panel { flex: 0 0 30%; width: 30%; }
+      .filter-btn { padding: 4px 7px; font-size: 11px; }
+      .header h1 { font-size: 15px; }
+    }
+
+    /* ============================================================
+       窄屏横屏第二档（≤599px）：右栏一行塞不下
+         「排名 | 玩家 | 平台+日期 | 用时」，
+       把「平台+日期」挪到第二行。
+       不这么做的话玩家名列会被压到 20~100px，
+       名字和曾用名只能一个字一个字竖着折，行高能撑到 300px。
+       ============================================================ */
+    @media (orientation: landscape) and (max-height: 520px) and (max-width: 599px) {
+      .side-panel { flex: 0 0 27%; width: 27%; }
+
+      .main-panel .row {
+        grid-template-columns: 22px minmax(0, 1fr) auto;
+        grid-template-areas:
+          "rank player time"
+          "rank meta   meta";
+        gap: 6px;
+        row-gap: 1px;
+        padding: 6px 9px;
+      }
+      .main-panel .meta { justify-content: flex-start; }
+      .main-panel .player-name { font-size: 12.5px; }
+      .main-panel .player-alias { font-size: 10px; }
+      .main-panel .player-rank-row { font-size: 9.5px; }
+      .main-panel .time { font-size: 12.5px; }
+      .main-panel .date { font-size: 10px; }
+      .main-panel .platform-badge { font-size: 9.5px; padding: 1px 5px; }
+
+      .filter-btn { padding: 4px 5px; font-size: 10px; }
+      .header h1 { font-size: 14px; }
+      .nav-btn { width: 26px; height: 26px; }
+      .search-field, .search-input, .generate-img-btn, .submit-btn { font-size: 11px; }
     }
   </style>
 </head>
