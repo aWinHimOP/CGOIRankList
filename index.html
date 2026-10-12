@@ -150,6 +150,12 @@
       box-shadow: var(--shadow);
     }
 
+    /* 分栏包装层：默认不产生盒子，DOM 结构对布局完全透明。
+       手机横屏的媒体查询里才会把它们变成真正的左右两栏。 */
+    .page-layout,
+    .side-panel,
+    .main-panel { display: contents; }
+
     /* 移动端「更多」按钮：PC 端隐藏 */
     .mobile-more-btn { display: none; }
 
@@ -702,9 +708,199 @@
       .row { padding: 12px 14px; gap: 8px 10px; }
       .stats { gap: 10px; font-size: 12px; }
     }
+
+    /* ============================================================
+       手机横屏：改成左右两栏
+         左栏（约 34% 宽）—— 页头、平台筛选、排序、搜索、操作按钮，全部竖排
+         右栏（其余空间）—— 整块留给排行榜
+       判定条件：横屏 + 视口高 ≤520px + 宽 ≤1000px。
+       桌面窗口通常高于 520px，竖屏手机宽度小于高度，都不会命中这条规则。
+       ============================================================ */
+    @media (orientation: landscape) and (max-height: 520px) and (max-width: 1000px) {
+      html, body { height: 100%; overflow: hidden; }
+
+      .page-layout {
+        display: flex;
+        flex-direction: row;
+        height: 100vh;
+        height: 100dvh;      /* 移动端浏览器有动态地址栏，dvh 更准；不支持时退回上面的 vh */
+        width: 100%;
+      }
+
+      /* ---------- 左栏 ---------- */
+      .side-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 34%;
+        width: 34%;
+        min-width: 190px;
+        max-width: 300px;
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        background: var(--card);
+        border-right: 1px solid var(--border);
+        padding-bottom: 10px;
+      }
+
+      .header {
+        padding: 7px 12px 6px;
+        background: none;
+      }
+      .header h1 { font-size: 15px; letter-spacing: 0; }
+      .header-content { gap: 8px; }
+      .nav-btn { width: 32px; height: 32px; }
+
+      .toolbar {
+        position: static;        /* 不再吸顶，左栏自己滚 */
+        padding: 0 12px;
+        background: none;
+        border-bottom: none;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+      /* 把搜索容器拆开，让「搜索字段」和输入框各自成为左栏里独立的一行。
+         这条必须写在这里：≤820px 那条只管窄屏，而横屏手机宽 844/915，
+         不写就会漏，搜索框会溢出到右栏上面去。 */
+      .search-container { display: contents; }
+
+      /* 顶部所有控件改成从上到下排列 */
+      html.js-ready .toolbar-content {
+        flex-direction: column;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        gap: 4px;
+      }
+      html.js-ready .filter-group {
+        order: 1;
+        width: 100%;
+        min-width: 0;
+        flex-wrap: wrap;         /* 平台按钮在窄栏里换行，不横向滚 */
+        overflow: visible;
+      }
+      .filter-btn { flex: 1 1 auto; padding: 5px 7px; font-size: 11.5px; }
+      html.js-ready #sortField,
+      html.js-ready #searchField,
+      html.js-ready .search-input-wrap,
+      html.js-ready .toolbar-actions-wrap { width: 100%; max-width: none; min-width: 0; }
+      html.js-ready #sortField            { order: 2; flex: 0 0 auto; }
+      html.js-ready #searchField          { order: 3; flex: 0 0 auto; }
+      html.js-ready .mobile-more-btn      { order: 4; display: none; }
+      html.js-ready .search-input-wrap    { order: 5; flex: 0 0 auto; }
+      html.js-ready .toolbar-actions-wrap { order: 6; }
+
+      /* 左栏有纵向空间，操作控件直接全部展开，不用再点「更多」 */
+      html.js-ready .toolbar-actions-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+      }
+      .toolbar-actions-wrap .edition-toggle { justify-content: flex-start; }
+      .toolbar-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .generate-img-btn, .submit-btn {
+        width: 100%;
+        text-align: center;
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      .search-field { width: 100%; padding: 6px 8px; font-size: 12px; }
+      .search-input { padding: 6px 8px 6px 32px; font-size: 12px; }
+      .search-icon { left: 10px; }
+      .edition-toggle { padding: 5px 8px; font-size: 11px; gap: 5px; }
+      .edition-toggle input { width: 13px; height: 13px; }
+
+      .notice-wrap {
+        margin: 8px 0 0;
+        padding: 0 12px;
+      }
+      .notice {
+        width: auto;
+        font-size: 10px;
+        line-height: 1.4;
+        padding: 5px 8px;
+        border-radius: 7px;
+      }
+      .notice-edition { margin-top: 4px; font-size: 9.5px; }
+
+      /* ---------- 右栏：排行榜 ---------- */
+      .main-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .container {
+        padding: 8px 10px 20px;
+        max-width: none;
+        min-height: 0;
+      }
+      .footer { padding: 10px; font-size: 11px; gap: 10px; }
+
+      /* ---------- 右栏的成绩行：压成单行紧凑布局 ----------
+         桌面版网格最小要 490px（含 220px 的「来源/主页」列），
+         而横屏右栏只有 440~615px，照搬会横向溢出、把行撑到 100~160px 高。
+         这里改成「排名 | 玩家 | 平台+日期 | 用时」的单行排布。 */
+      .main-panel .row {
+        grid-template-columns: 26px minmax(0, 1fr) auto auto;
+        grid-template-areas: "rank player meta time";
+        gap: 10px;
+        padding: 7px 10px;
+        border-radius: 10px;
+        min-width: 0;
+      }
+      .main-panel .rank        { grid-area: rank; font-size: 14px; }
+      .main-panel .player-info { grid-area: player; min-width: 0; }
+      .main-panel .meta {
+        grid-area: meta;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .main-panel .time        { grid-area: time; font-size: 14px; white-space: nowrap; }
+      /* 单行放不下「来源/主页」，横屏先隐藏——点玩家名进去仍能看到全部来源 */
+      .main-panel .links       { display: none; }
+      .main-panel .time-label  { display: none; }
+      /* 玩家名和曾用名并到一行，省下一行高度 */
+      .main-panel .player-info {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0 6px;
+      }
+      .main-panel .player-name { font-size: 13.5px; line-height: 1.25; }
+      .main-panel .player-alias { font-size: 10.5px; line-height: 1.3; margin: 0; }
+      .main-panel .player-rank-row {
+        flex: 1 0 100%;          /* 名次行单独占一行 */
+        font-size: 10px;
+        line-height: 1.3;
+        margin: 1px 0 0;
+        gap: 6px;
+      }
+      .main-panel .platform-badge { font-size: 10px; padding: 1px 6px; }
+      .main-panel .date { font-size: 10.5px; }
+
+      .stats { gap: 8px; font-size: 11.5px; margin-bottom: 8px; }
+    }
   </style>
 </head>
 <body>
+  <!-- 下面两层是手机横屏专用的分栏包装。
+       竖屏和桌面端它们是 display:contents，不产生任何盒子，
+       渲染结果与不加包装时完全一致；横屏时才变成左右两栏。 -->
+  <div class="page-layout">
+  <div class="side-panel">
+
   <div class="header">
     <div class="header-content">
       <h1>CGOI 排行榜</h1>
@@ -784,6 +980,10 @@
      <div class="notice">通关时间带 [*] = 有争议或作弊的成绩 | 主页带 [*] = 身份未确认</div>
      <div class="notice notice-edition"><strong>特殊版本</strong>指移动端里非 Benett Foddy 或 Noodlecake 制作的版本，例如抖音版、TapTap 版，或移动端 1.9.4 之后的版本（不含 1.9.4）。主榜默认屏蔽特殊版本。</div>
    </div>
+
+  </div><!-- /side-panel -->
+
+  <div class="main-panel">
 
   <div class="container">
     <div class="stats" id="stats"></div>
@@ -1355,5 +1555,8 @@
       <span>549361403</span>
     </a>
   </div>
+
+  </div><!-- /main-panel -->
+  </div><!-- /page-layout -->
 </body>
 </html>
