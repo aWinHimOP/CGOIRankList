@@ -9113,6 +9113,29 @@
     ]
   },
   {
+    "player": "Maogug",
+    "homepage": "https://space.bilibili.com/498794072",
+    "records": [
+      {
+        "time": "1m08.698s",
+        "platform": "PC",
+        "date": "2026-10-24 02:09",
+        "source": "cgoi群"
+      },
+      {
+        "time": "1m12.483s",
+        "platform": "PC",
+        "date": "2023-11-4 15:57",
+        "source": "https://www.bilibili.com/opus/860050987553914902"
+      },
+      {
+        "time": "1m51.457s",
+        "platform": "Android",
+        "date": ""
+      }
+    ]
+  },
+  {
     "player": "exkugga",
     "homepage": "https://space.bilibili.com/519836348",
     "records": [
@@ -9500,23 +9523,6 @@
         "date": "",
         "source": "https://b23.tv/J4v4pqb",
         "alias": "—纯正的瓜皮"
-      }
-    ]
-  },
-  {
-    "player": "Maogug",
-    "homepage": "https://space.bilibili.com/498794072",
-    "records": [
-      {
-        "time": "1m12.483s",
-        "platform": "PC",
-        "date": "2023-11-4 15:57",
-        "source": "https://www.bilibili.com/opus/860050987553914902"
-      },
-      {
-        "time": "1m51.457s",
-        "platform": "Android",
-        "date": ""
       }
     ]
   },
